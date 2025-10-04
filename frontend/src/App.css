@@ -7,15 +7,21 @@ body, html {
   font-family: 'Poppins', system-ui, Avenir, Helvetica, Arial, sans-serif;
   background: linear-gradient(135deg, #ffebf0, #ffe0f5);
   color: #333;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .app {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
-  padding: 2rem;
+  justify-content: center;
   gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
 }
 
 /* =========================
@@ -24,8 +30,8 @@ body, html {
 .header {
   display: flex;
   flex-direction: column;
-  align-items: center; /* center the header content */
-  gap: 0.5rem;         /* space between h1 and p */
+  align-items: center;
+  gap: 0.5rem;
   text-align: center;
 }
 
@@ -44,15 +50,15 @@ body, html {
 }
 
 /* =========================
-   Search Container
+   Search Section
    ========================= */
 .search-container {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 2rem; /* gap between search bar and map */
+  gap: 1rem;
+  margin-bottom: 2rem;
+  width: 100%;
 }
 
 .search-container input {
@@ -63,8 +69,8 @@ body, html {
   width: 300px;
   background-color: #fff0f6;
   color: #333;
-  transition: all 0.3s ease;
   text-align: center;
+  transition: all 0.3s ease;
 }
 
 .search-container input::placeholder {
@@ -77,20 +83,103 @@ body, html {
   box-shadow: 0 0 10px rgba(255, 77, 166, 0.5);
 }
 
-.search-container button {
+/* Buttons wrapper */
+.search-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* General button styles */
+.search-buttons button {
   padding: 0.8rem 1.5rem;
   font-size: 1rem;
   border-radius: 50px;
-  background: linear-gradient(90deg, #ff4da6, #ff66c4);
-  color: #fff;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.search-container button:hover {
+/* Start Route Button */
+.search-buttons button:first-child {
+  background: linear-gradient(90deg, #ff4da6, #ff66c4);
+  color: #fff;
+}
+.search-buttons button:first-child:hover {
   background: linear-gradient(90deg, #e60073, #ff3399);
   transform: translateY(-2px);
+}
+
+/* Emergency button */
+.emergency-btn {
+  background: linear-gradient(90deg, #ff0000, #cc0000);
+  color: #fff;
+}
+.emergency-btn:hover {
+  background: linear-gradient(90deg, #cc0000, #990000);
+  transform: translateY(-2px);
+}
+
+/* Safe-word setup row (input + label) */
+.safe-word-setup {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.safe-word-setup label {
+  font-size: 0.9rem;
+  color: #cc3366;
+}
+
+.safe-word-setup input {
+  padding: 0.5rem 0.8rem;
+  border-radius: 50px;
+  border: 2px solid #ffd1e6;
+  background: #fff7fb;
+  width: 180px;
+  text-align: center;
+}
+
+.safe-word-setup .hint {
+  display: block;
+  width: 100%;
+  text-align: center;
+  color: #aa5a82;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Keep buttons in same horizontal row (Start / Emergency / Safe Word) */
+.search-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Safe Word active pulse already in your CSS; ensure it exists: */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
+  50% { box-shadow: 0 0 15px rgba(255, 51, 0, 0.9); }
+  100% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
+}
+
+.safe-word-btn.active {
+  animation: pulse 1.2s infinite;
+}
+
+
+/* Pulse animation for Safe Word active state */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
+  50% { box-shadow: 0 0 15px rgba(255, 51, 0, 0.9); }
+  100% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
 }
 
 /* =========================
@@ -98,6 +187,7 @@ body, html {
    ========================= */
 .map-section {
   width: 100%;
+  max-width: 900px;
   height: 60vh;
   border-radius: 20px;
   overflow: hidden;
@@ -113,6 +203,7 @@ body, html {
   gap: 2rem;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
 }
 
 .feature {
@@ -143,6 +234,7 @@ body, html {
   color: #333;
   box-shadow: 0 8px 20px rgba(255, 77, 166, 0.2);
   transition: transform 0.3s ease;
+  margin: 0 auto;
 }
 
 .weather-widget:hover {
@@ -223,18 +315,6 @@ body, html {
   color: #cc3366;
 }
 
-.safe-text { font-size: 1.6rem; color: #28a745; font-weight: bold; }
-.problem-text { font-weight: bold; }
-
-.checkin-buttons { display: flex; justify-content: center; gap: 0.5rem; }
-.ok-btn {
-  background-color: #28a745; color: #fff; border-radius: 50px; padding: 0.5rem 1rem;
-}
-.ok-btn:hover { background-color: #1e7e34; }
-.need-help-btn {
-  background-color: #dc3545; color: #fff; border-radius: 50px; padding: 0.5rem 1rem;
-}
-.need-help-btn:hover { background-color: #a71d2a; }
 
 /* =========================
    Footer
@@ -247,11 +327,12 @@ footer {
   text-align: center;
 }
 
-/* =========================  
+/* =========================
    Responsive
    ========================= */
 @media (max-width: 768px) {
   .search-container input { width: 90%; }
   .features, .feature { flex-direction: column; width: 90%; }
   .map-section { height: 50vh; }
+  .search-buttons { flex-direction: column; gap: 0.5rem; }
 }
