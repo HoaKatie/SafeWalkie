@@ -4,8 +4,8 @@ import MapView from './components/MapView';
 import WeatherWidget from './components/WeatherWidget';
 
 function App() {
-  const [riskLevel, setRiskLevel] = useState(1); // example risk
-  const [riskPosition, setRiskPosition] = useState(40);
+  const [riskLevel, setRiskLevel] = useState(0); // example risk
+  const [riskPosition, setRiskPosition] = useState(10);
   const [destination, setDestination] = useState('');
 
   // Safe word states
