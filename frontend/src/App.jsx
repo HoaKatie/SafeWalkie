@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import './App.css';
 import MapView from './components/MapView'; // adjust path to where your MapView.jsx isnpm
+import WeatherWidget from './components/WeatherWidget';
+
 function App() {
   // Example backend risk score (0 = safe, 1 = amber, 2 = red)
-  const [riskLevel, setRiskLevel] = useState(0); // Replace with API data
+  const [riskLevel, setRiskLevel] = useState(1); // Replace with API data
   const [riskPosition, setRiskPosition] = useState(40); // % position of slider
 
   const [destination, setDestination] = useState('');
@@ -87,10 +89,9 @@ function App() {
             )}
           </div>
 
-          {/* Offline Mode Feature */}
-          <div className="feature">
-            <h3>Offline Mode</h3>
-            <p>Access maps even without internet.</p>
+{/* Live Weather Feature */}
+<div className="feature">
+            <WeatherWidget />
           </div>
         </div>
       </main>

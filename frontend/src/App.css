@@ -252,3 +252,25 @@ footer {
     height: 300px;
   }
 }
+.weather-widget {
+  background-color: #fff0f6;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  width: 250px;
+  text-align: center;
+  color: #333;
+}
+
+.weather-temp {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+  color: #ff4da6;
+}
+
+.weather-condition {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #cc3366;
+}
+
