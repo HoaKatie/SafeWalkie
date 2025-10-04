@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SafeWalkie</string>
+    <string name="title_activity_main">SafeWalkie</string>
+    <string name="package_name">com.safewalkie.app</string>
+    <string name="custom_url_scheme">com.safewalkie.app</string>
+</resources>
