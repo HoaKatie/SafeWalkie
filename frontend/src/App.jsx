@@ -28,8 +28,8 @@ function App() {
           <button onClick={handleSearch}>Start</button>
         </div>
 
-        <div className="map-placeholder">
-          <p>Map will appear here</p>
+        <div className="map-section">
+          <MapView/>
         </div>
 
         <div className="features">

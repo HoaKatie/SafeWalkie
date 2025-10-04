@@ -59,8 +59,8 @@
   background-color: #e60073;
 }
 
-/* Map Placeholder */
-.map-placeholder {
+/* Map Section */
+.map-section {
   width: 100%;
   max-width: 800px;
   height: 400px;
@@ -129,10 +129,12 @@ footer {
     width: 90%;
   }
 
-  .map-placeholder {
+  .map-section {
     height: 300px;
   }
 }
+
+
 
 /* Risk Meter Card */
 .risk-meter {
