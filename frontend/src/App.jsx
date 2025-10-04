@@ -98,7 +98,7 @@ function App() {
 
       {/* Footer */}
       <footer>
-        <p>&copy; 2025 NavGuide. All rights reserved.</p>
+        <p>&copy; 2025 Safe Walkie. All rights reserved.</p>
       </footer>
     </div>
   );
