@@ -26,6 +26,17 @@ function App() {
 }
   const clientId = getOrCreateClientId();
 
+  // translate score → UI level/position
+  function scoreToUi(score) {
+    const level = score <= 24 ? 0 : score <= 59 ? 1 : 2; // 0=green,1=amber,2=red
+    const pos = Math.max(0, Math.min(100, score));       // 0–100%
+    console.log(`Risk score ${score} → level ${level}, pos ${pos}%`);
+    return { level, pos };
+  }
+
+  const [riskScore, setRiskScore] = useState(0);
+
+
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -227,6 +238,28 @@ function App() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+  if (!sessionId) return;           // wait until /start_walk returns
+  const t = setInterval(async () => {
+    try {
+      const res = await fetch(`/risk/latest?sid=${sessionId}`);
+      if (!res.ok) return;
+      const json = await res.json();   // { riskScore: number }
+      if (typeof json.riskScore === 'number') {
+        setRiskScore(json.riskScore);
+        const { level, pos } = scoreToUi(json.riskScore);
+        setRiskLevel(level);
+        setRiskPosition(pos);
+      }
+    } catch (e) {
+      // ignore transient network errors
+    }
+  }, 3000); // poll every 3s
+
+  return () => clearInterval(t);
+}, [sessionId]);
+
 
   return (
     <div className="app">

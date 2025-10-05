@@ -18,8 +18,10 @@ export default defineConfig({
         changeOrigin: true,
         // secure: false, // uncomment if your BE uses self-signed https
       },
-      // (optional) add other BE routes here:
-      // '/update_location': { target: 'http://localhost:5000', changeOrigin: true },
+       '/update_location': { target: 'http://localhost:5001', changeOrigin: true },
+        '/risk/latest': { target: 'http://localhost:5001', changeOrigin: true },
+        '/risk_update':  { target: 'http://localhost:5001', changeOrigin: true },
+
     },
   },
 })

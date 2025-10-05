@@ -187,9 +187,23 @@ def update_location():
 
 
     # Publish event to RabbitMQ
-    publish_event("location_update", data)
+    publish_event("walk.started", {"location_update": [lon, lat], "timestamp": datetime.utcnow().isoformat()})
 
     return jsonify({"status": "queued", "message": "Location update sent to queue"}), 200
+
+latest_risk = {}  # sid -> update dict
+
+@app.post("/risk_update")
+def risk_update():
+    data = request.get_json(force=True)
+    sid = data.get("walking_session_id")
+    if sid: latest_risk[sid] = data
+    return ("", 204)
+
+@app.get("/risk/latest")
+def risk_latest():
+    sid = request.args.get("sid")
+    return jsonify(latest_risk.get(sid, {})), 200
 
 # ------------------------------
 # Run Flask App
