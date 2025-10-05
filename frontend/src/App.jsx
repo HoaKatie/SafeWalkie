@@ -247,27 +247,39 @@ function App() {
     }
   };
 
-  // 🔔 Trigger emergency call (supports tel: for now, Twilio later)
+  // 🔔 Trigger emergency call (Twilio integration)
   const triggerEmergencyCall = async () => {
     try {
+      // If running on a mobile browser, use the device dialer directly
       if (/Mobi|Android/i.test(navigator.userAgent)) {
-        // On mobile browser: open native dialer directly
         window.location.href = `tel:${emergencyPhone}`;
-      } else {
-        // On desktop: show simulated call or later use Twilio
-        console.log("Desktop environment detected — preparing backend/Twilio call...");
-        // placeholder for backend call (when you enable Twilio)
-        // await fetch('/api/call_emergency', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ phone: emergencyPhone })
-        // });
-        alert(`Simulated call to ${emergencyPhone}`);
+        return;
       }
+
+      // Otherwise, call backend Twilio API
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+      const res = await fetch(`${backendUrl}/api/call_emergency`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: emergencyPhone }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("Call API error:", err);
+        alert("Failed to trigger call via backend. Check backend logs.");
+        return;
+      }
+
+      const json = await res.json();
+      console.log("Call placed:", json);
+      alert("✅ Emergency call placed via backend (Twilio).");
     } catch (err) {
-      console.error("Error triggering call:", err);
+      console.error("Error triggering Twilio call:", err);
+      alert("⚠️ Could not contact backend.");
     }
   };
+
 
 
 
@@ -341,6 +353,8 @@ function App() {
             if (safeWord && transcript.includes(safeWord.trim().toLowerCase())) {
               // Immediately trigger emergency sound (no popup alert)
               handleEmergency(true);
+              // Trigger simulated call
+              triggerEmergencyCall();
             }
 
             // For debugging: print every recognized word/phrase to console
@@ -585,6 +599,7 @@ function App() {
           value={destination}
           onChange={(e) => { setDestination(e.target.value); setOpenSuggestions(true); }}
           onKeyDown={handleKeyDown}
+          style={ { color: 'black' } }
         />
         {openSuggestions && suggestions.length > 0 && (
           <ul className="suggestions-dropdown">
@@ -614,7 +629,7 @@ function App() {
         value={safeWord}
         onChange={(e) => setSafeWord(e.target.value)}
         placeholder="help"
-        style={ { width: '97%' } }
+        style={ { width: '97%', color: 'black' } }
       />
       <small className="hint">When listening, saying this word triggers the emergency action.</small>
     </div>
