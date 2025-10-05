@@ -13,6 +13,19 @@ function App() {
   const [triggerRoute, setTriggerRoute] = useState(false);
   const [mode, setMode] = useState("driving"); // driving | walking
   const [userLocation, setUserLocation] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [routeCoords, setRouteCoords] = useState(null); // [[lon,lat], ...] from BE
+
+  function getOrCreateClientId() {
+  let id = localStorage.getItem("client_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("client_id", id);
+  }
+  return id;
+}
+  const clientId = getOrCreateClientId();
+
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -66,6 +79,37 @@ function App() {
     console.log('Selected place:', place);
   };
 
+  async function startWalkFlow() {
+    if (!userLocation) {
+      alert("Waiting for your current location...");
+      return;
+    }
+    if (!selectedCoords) {
+      alert("Please choose a valid destination from the suggestions.");
+      return;
+    }
+
+    const payload = {
+      user_id: clientId,
+      start_location: [userLocation.longitude, userLocation.latitude],
+      end_location: selectedCoords
+    };
+
+    const res = await fetch("/start_walk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Backend error ${res.status}`);
+    }
+
+    const json = await res.json(); // { walking_session_id, route: [[lon,lat], ...] }
+    setSessionId(json.walking_session_id);
+    setRouteCoords(json.route);
+  }
 
   // Safe word states
   const [safeWord, setSafeWord] = useState('help'); // default safe word
@@ -81,6 +125,7 @@ function App() {
 
     setTriggerRoute((prev) => !prev);
     setSuggestions([]); // close dropdown
+    startWalkFlow() // initiate walk session, call BE
   };
 
   // Disable Enter key triggering any route search

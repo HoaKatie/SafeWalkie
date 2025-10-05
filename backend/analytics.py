@@ -203,56 +203,6 @@ threading.Thread(target=consumer_loop, daemon=True).start()
 threading.Thread(target=watchdog_inactivity_check, daemon=True).start()
 
 # =========================
-# REST endpoints
-# =========================
-@app.route("/")
-def home():
-    return jsonify({
-        "status": "Real-time Analytics API running",
-        "sessions": list(active_sessions.keys())
-    })
-
-@app.route("/start_walk", methods=["POST"])
-def start_walk():
-    data = request.get_json(force=True)
-    user_id = data["user_id"]
-    route = data.get("route", [])
-    route_id = data.get("route_id")
-    active_sessions[user_id] = WalkSession(user_id, route, route_id)
-    print(f"[+] Started walk for {user_id}")
-    return jsonify({"message": "Walk started", "user_id": user_id})
-
-@app.route("/update_location", methods=["POST"])
-def update_location_endpoint():
-    """
-    Accepts client updates and publishes them to RabbitMQ.
-    The consumer thread will receive and analyze them in real time.
-    """
-    data = request.get_json(force=True)
-    if not all(k in data for k in ("user_id", "lat", "lon")):
-        return jsonify({"error": "Missing required fields"}), 400
-
-    publish_event(LOCATION_QUEUE, "location_update", {
-        "user_id": data["user_id"],
-        "lat": float(data["lat"]),
-        "lon": float(data["lon"]),
-    })
-    return jsonify({"status": "queued"})
-
-@app.route("/stop_walk", methods=["POST"])
-def stop_walk():
-    data = request.get_json(force=True)
-    user_id = data["user_id"]
-    session = active_sessions.get(user_id)
-    if not session:
-        return jsonify({"error": "Session not found"}), 404
-    session.is_active = False
-    end_time = datetime.utcnow()
-    duration = str(end_time - session.start_time)
-    print(f"[-] Walk stopped for {user_id}, duration: {duration}")
-    return jsonify({"message": "Walk stopped", "duration": duration})
-
-# =========================
 # Run
 # =========================
 if __name__ == "__main__":
