@@ -4,19 +4,58 @@ import MapView from './components/MapView';
 import WeatherWidget from './components/WeatherWidget';
 
 function App() {
-  const [riskLevel, setRiskLevel] = useState(0); // example risk
-  const [riskPosition, setRiskPosition] = useState(10);
-  const [destination, setDestination] = useState('');
+  const [riskLevel, setRiskLevel] = useState(1);
+  const [riskPosition, setRiskPosition] = useState(40);
+  const [destination, setDestination] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedCoords, setSelectedCoords] = useState(null);
+  const [triggerRoute, setTriggerRoute] = useState(false);
+  const [mode, setMode] = useState("driving"); // driving | walking
+
+  // 🔍 Autocomplete from Mapbox Geocoding API
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (destination.length < 3) {
+        setSuggestions([]);
+        return;
+      }
+      const token = import.meta.env.VITE_MAPBOX_TOKEN;
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          destination
+        )}.json?access_token=${token}&autocomplete=true&limit=5`
+      );
+      const data = await res.json();
+      setSuggestions(data.features || []);
+    };
+    fetchSuggestions();
+  }, [destination]);
+
+  const handleSelect = (place) => {
+    setDestination(place.place_name);
+    setSelectedCoords(place.geometry.coordinates);
+    setSuggestions([]); // close dropdown
+  };
 
   // Safe word states
   const [safeWord, setSafeWord] = useState('help'); // default safe word
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
 
-  // Search function
   const handleSearch = () => {
-    alert(`Searching directions to: ${destination}`);
-    // Integrate Mapbox/Google Maps API here
+    if (!selectedCoords) {
+      alert("Please choose a valid destination from the suggestions.");
+      return;
+    }
+    setTriggerRoute((prev) => !prev);
+    setSuggestions([]); // close dropdown
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      setSuggestions([]); // ✅ close dropdown
+      handleSearch();
+    }
   };
 
   // Emergency action
@@ -117,12 +156,25 @@ function App() {
       <main>
         {/* Search Bar + Buttons + Safe Word input */}
         <div className="search-container">
-          <input
-            type="text"
-            placeholder="Enter your destination"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              type="text"
+              placeholder="Enter your destination"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            {/* Dropdown suggestions */}
+            {suggestions.length > 0 && (
+              <ul className="suggestions-dropdown">
+                {suggestions.map((s) => (
+                  <li key={s.id} onClick={() => handleSelect(s)}>
+                    {s.place_name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <div className="search-buttons">
             <button onClick={handleSearch}>Start Route</button>
@@ -156,10 +208,15 @@ function App() {
 
         {/* Map Section */}
         <div className="map-section">
-          <MapView />
+          <MapView
+            destination={selectedCoords}
+            mode={mode}
+            setMode={setMode}
+            triggerRoute={triggerRoute}
+          />
         </div>
 
-        {/* Features Section */}
+        {/* Feature Section (unchanged) */}
         <div className="features">
           {/* Risk Meter */}
           <div className="feature risk-meter">

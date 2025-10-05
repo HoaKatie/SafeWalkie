@@ -75,6 +75,11 @@ body, html {
 
 .search-container input::placeholder {
   color: #cc6699;
+  transition: opacity 0.2s ease;
+}
+
+.search-container input:focus::placeholder {
+  opacity: 0;
 }
 
 .search-container input:focus {
@@ -253,6 +258,70 @@ body, html {
   font-weight: 500;
   color: #cc3366;
 }
+
+/* =========================
+  Suggestions dropdown 
+  ========================= */
+.suggestions-dropdown {
+  position: absolute;
+  top: 3rem;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 999;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestions-dropdown li {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.suggestions-dropdown li:hover {
+  background: #ffe0f5;
+}
+
+/* Floating toggle inside map */
+.mode-btn-map {
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 20px;
+  background: #f7c4d8; /* soft light pink by default */
+  color: #cc3366;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(255, 77, 166, 0.15);
+}
+
+.mode-btn-map.active {
+  background: linear-gradient(90deg, #ff4da6, #ff66c4); /* strong pink */
+  color: #fcf8fc;
+  box-shadow: 0 3px 8px rgba(255, 77, 166, 0.3);
+}
+
+.mode-btn-map:hover {
+  background: #f9c8dc; /* light hover pink */
+  transform: translateY(-1px);
+}
+
+/* keep the group container neat */
+.mode-toggle-map {
+  display: flex;
+  gap: 0.5rem;
+  background: #f8f6f8;
+  border-radius: 12px;
+  padding: 6px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 
 /* =========================
    Risk Meter
