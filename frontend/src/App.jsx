@@ -117,7 +117,32 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!sessionId || !userLocation) return; // only start once both exist
 
+    const interval = setInterval(async () => {
+      try {
+        const payload = {
+          user_id: clientId,
+          current_location: [userLocation.longitude, userLocation.latitude],
+          walking_session_id: sessionId,
+          timestamp: new Date().toISOString(),
+        };
+
+        const response = await fetch("/update_location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        console.log("✅ Published location", payload);
+
+      } catch (err) {
+        console.warn("Failed to publish location:", err);
+      }
+    }, 5000); // every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [sessionId, userLocation, clientId]);
   
   // Autocomplete from Mapbox Geocoding API
   useEffect(() => {
