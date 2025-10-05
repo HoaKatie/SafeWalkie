@@ -596,7 +596,8 @@ function App() {
 
     <div className="emergency-row">
       <button className="sos" onClick={toggleEmergency}>🆘 Emergency</button>
-      <button className="dark">🔈 Test Alert</button>
+      <button className="dark" onClick={() => setShowGuardian(true)}>🔈 GuardianDashboard</button>
+
     </div>
     </section>
 
