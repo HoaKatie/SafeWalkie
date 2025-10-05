@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Walk Demo</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .map-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .map-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        #map {
+            flex: 1;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .alerts-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
+        .alert-icon {
+            font-size: 18px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .map-section {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="map-section">
+            <div class="map-header">
+                <h1>🛡️ Guardian Walk Monitor</h1>
+                <div class="status-badge" id="statusBadge">Ready</div>
+            </div>
+            <div id="map"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <h2>Walk Controls</h2>
+                <button class="btn btn-start" id="startBtn" onclick="startWalk()">Start Walk</button>
+                <button class="btn btn-stop" id="stopBtn" onclick="stopWalk()" disabled>Stop Walk</button>
+            </div>
+
+            <div class="card">
+                <h2>Walk Info</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">User ID</span>
+                        <span class="info-value" id="userId">demo-user-1</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Session ID</span>
+                        <span class="info-value" id="sessionId">Not started</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Progress</span>
+                        <span class="info-value" id="progress">0%</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Current Point</span>
+                        <span class="info-value" id="currentPoint">0 / 0</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="card" style="flex: 1; min-height: 200px;">
+                <h2>Safety Alerts</h2>
+                <div class="alerts-container" id="alertsContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔔</div>
+                        <div>No alerts yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const API_BASE = 'http://127.0.0.1:5001';
+        const START_LOCATION = [-79.344895, 43.763708];
+        const END_LOCATION = [-79.338404, 43.762259];
+        const USER_ID = 'demo-user-1';
+
+        let map, routeLine, currentMarker, startMarker, endMarker;
+        let walkingSessionId = null;
+        let routeCoordinates = [];
+        let currentRouteIndex = 0;
+        let simulationInterval = null;
+        let alertCheckInterval = null;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([43.763708, -79.344895], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Start marker
+            startMarker = L.marker([START_LOCATION[1], START_LOCATION[0]], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div style="background: #4CAF50; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">🏁</div>',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map).bindPopup('Start Point');
+
+            // End marker
+            endMarker = L.marker([END_LOCATION[1], END_LOCATION[0]], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div style="background: #f44336; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">🎯</div>',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map).bindPopup('Destination');
+        }
+
+        // Start walk
+        async function startWalk() {
+            try {
+                updateStatus('Starting walk...');
+                
+                const response = await fetch(`${API_BASE}/start_walk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: USER_ID,
+                        start_location: START_LOCATION,
+                        end_location: END_LOCATION
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                walkingSessionId = data.walking_session_id;
+                routeCoordinates = data.route;
+
+                // Update UI
+                document.getElementById('sessionId').textContent = walkingSessionId.substring(0, 13) + '...';
+                document.getElementById('currentPoint').textContent = `0 / ${routeCoordinates.length}`;
+                
+                // Draw route on map
+                const latLngs = routeCoordinates.map(coord => [coord[1], coord[0]]);
+                routeLine = L.polyline(latLngs, {
+                    color: '#667eea',
+                    weight: 4,
+                    opacity: 0.7
+                }).addTo(map);
+
+                // Create current position marker
+                currentMarker = L.marker([START_LOCATION[1], START_LOCATION[0]], {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: '<div style="background: #2196F3; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [20, 20]
+                    })
+                }).addTo(map);
+
+                map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+
+                // Start simulation
+                currentRouteIndex = 0;
+                simulationInterval = setInterval(updateLocation, 1000);
+                alertCheckInterval = setInterval(checkForAlerts, 2000);
+
+                // Update buttons
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                updateStatus('Walking...');
+
+                addAlert('info', 'Walk started successfully!', '🚶');
+            } catch (error) {
+                console.error('Error starting walk:', error);
+                updateStatus('Error');
+                addAlert('danger', `Failed to start walk: ${error.message}`, '❌');
+            }
+        }
+
+        // Update location
+        async function updateLocation() {
+            if (currentRouteIndex >= routeCoordinates.length) {
+                stopWalk();
+                return;
+            }
+
+            const coord = routeCoordinates[currentRouteIndex];
+            
+            try {
+                await fetch(`${API_BASE}/update_location`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: USER_ID,
+                        current_location: coord,
+                        walking_session_id: walkingSessionId
+                    })
+                });
+
+                // Update marker position
+                currentMarker.setLatLng([coord[1], coord[0]]);
+                
+                // Update progress
+                currentRouteIndex++;
+                const progress = Math.round((currentRouteIndex / routeCoordinates.length) * 100);
+                document.getElementById('progress').textContent = `${progress}%`;
+                document.getElementById('progressFill').style.width = `${progress}%`;
+                document.getElementById('currentPoint').textContent = `${currentRouteIndex} / ${routeCoordinates.length}`;
+
+            } catch (error) {
+                console.error('Error updating location:', error);
+            }
+        }
+
+        // Check for alerts from backend
+        async function checkForAlerts() {
+            if (!walkingSessionId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/risk/latest?sid=${walkingSessionId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.alert_type && data.timestamp) {
+                        // Check if this is a new alert
+                        const alertTime = new Date(data.timestamp).getTime();
+                        const lastCheck = localStorage.getItem('lastAlertCheck') || 0;
+                        
+                        if (alertTime > lastCheck) {
+                            handleAlert(data);
+                            localStorage.setItem('lastAlertCheck', alertTime);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking alerts:', error);
+            }
+        }
+
+        // Handle different alert types
+        function handleAlert(data) {
+            const alertType = data.alert_type;
+            let severity = 'warning';
+            let icon = '⚠️';
+            let message = data.message || 'Safety alert detected';
+
+            switch(alertType) {
+                case 'suspicious_jump':
+                    severity = 'danger';
+                    icon = '📍';
+                    break;
+                case 'night_time':
+                    severity = 'warning';
+                    icon = '🌙';
+                    break;
+                case 'off_route':
+                    severity = 'warning';
+                    icon = '🗺️';
+                    break;
+                case 'no_movement':
+                    severity = 'danger';
+                    icon = '⏱️';
+                    break;
+            }
+
+            addAlert(severity, message, icon);
+        }
+
+        // Stop walk
+        async function stopWalk() {
+            if (!walkingSessionId) return;
+
+            try {
+                await fetch(`${API_BASE}/stop_walk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: USER_ID,
+                        walking_session_id: walkingSessionId
+                    })
+                });
+
+                // Clear intervals
+                if (simulationInterval) clearInterval(simulationInterval);
+                if (alertCheckInterval) clearInterval(alertCheckInterval);
+
+                // Update UI
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                updateStatus('Walk completed');
+
+                addAlert('info', 'Walk stopped successfully', '✅');
+            } catch (error) {
+                console.error('Error stopping walk:', error);
+                addAlert('danger', `Failed to stop walk: ${error.message}`, '❌');
+            }
+        }
+
+        // Add alert to UI
+        function addAlert(type, message, icon) {
+            const container = document.getElementById('alertsContainer');
+            
+            // Remove empty state if it exists
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert-item alert-${type}`;
+            alertDiv.innerHTML = `
+                <div class="alert-icon">${icon}</div>
+                <div class="alert-content">
+                    <div>${message}</div>
+                    <div class="alert-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+            container.insertBefore(alertDiv, container.firstChild);
+
+            // Keep only last 10 alerts
+            while (container.children.length > 10) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        // Update status badge
+        function updateStatus(status) {
+            document.getElementById('statusBadge').textContent = status;
+        }
+
+        // Initialize on load
+        window.onload = initMap;
+    </script>
+</body>
+</html>
