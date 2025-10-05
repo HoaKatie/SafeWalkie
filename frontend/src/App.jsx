@@ -13,6 +13,10 @@ function App() {
   const [triggerRoute, setTriggerRoute] = useState(false);
   const [mode, setMode] = useState("driving"); // driving | walking
   const [userLocation, setUserLocation] = useState(null);
+
+  const emergencyAudioRef = useRef(null);
+  const [emergencyOn, setEmergencyOn] = useState(false);
+
   const [sessionId, setSessionId] = useState(null);
   const [routeCoords, setRouteCoords] = useState(null); // [[lon,lat], ...] from BE
 
@@ -25,7 +29,7 @@ function App() {
   return id;
 }
   const clientId = getOrCreateClientId();
-
+  
   // translate score → UI level/position
   function scoreToUi(score) {
     const level = score <= 24 ? 0 : score <= 59 ? 1 : 2; // 0=green,1=amber,2=red
@@ -37,6 +41,14 @@ function App() {
   const [riskScore, setRiskScore] = useState(0);
 
 
+  useEffect(() => {
+    return () => {
+      if (emergencyAudioRef.current) {
+        emergencyAudioRef.current.pause();
+        emergencyAudioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -149,12 +161,35 @@ function App() {
 
 
   // Emergency action
-  const handleEmergency = (silent = false) => {
-    // Put emergency.mp3 in your public/ folder so it's available at /emergency.mp3
-    const audio = new Audio('/emergency.mp3');
-    audio.play().catch((err) => console.log('Audio play error:', err));
-    if (!silent) alert('Emergency activated!');
+  const ensureEmergencyAudio = () => {
+    if (!emergencyAudioRef.current) {
+      const audio = new Audio('/emergency.mp3');
+      audio.loop = true; // keep sounding until toggled off
+      emergencyAudioRef.current = audio;
+    }
+    return emergencyAudioRef.current;
   };
+
+  // Force ON (safe word can call this)
+  const handleEmergency = () => {
+    const audio = ensureEmergencyAudio();
+    audio.play().catch((err) => console.log('Audio play error:', err));
+    setEmergencyOn(true);
+  };
+
+  // Button uses this to toggle ON/OFF
+  const toggleEmergency = () => {
+    const audio = ensureEmergencyAudio();
+    if (!emergencyOn) {
+      audio.play().catch((err) => console.log('Audio play error:', err));
+      setEmergencyOn(true);
+    } else {
+      audio.pause();
+      audio.currentTime = 0; // reset to start
+      setEmergencyOn(false);
+    }
+  };
+
 
   // Toggle speech recognition (Safe Word)
   const toggleSafeWord = () => {
@@ -297,10 +332,9 @@ function App() {
           <div className="search-buttons">
             <button onClick={handleSearch}>Start Route</button>
 
-            <button className="emergency-btn" onClick={() => handleEmergency()}>
+            <button className="emergency-btn" onClick={toggleEmergency}>
               🚨 Emergency
             </button>
-
             {/* Safe Word toggle button */}
             <button
               className={`safe-word-btn ${listening ? 'active' : ''}`}
