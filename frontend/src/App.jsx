@@ -39,7 +39,7 @@ function CircularRisk({ value = 0, size = 160, stroke = 14 }) {
 
 function App() {
   const [riskLevel, setRiskLevel] = useState(1);
-  const [riskPosition, setRiskPosition] = useState(40);
+  const [riskPosition, setRiskPosition] = useState(60);
   const [destination, setDestination] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [openSuggestions, setOpenSuggestions] = useState(false);
@@ -87,7 +87,7 @@ function App() {
     return { level, pos };
   }
 
-  const [riskScore, setRiskScore] = useState(0);
+  const [riskScore, setRiskScore] = useState(40);
 
 
   useEffect(() => {
@@ -621,23 +621,26 @@ function App() {
           </section>
 
 
-          <div className={`feature checkin-banner ${riskLevel === 1 ? 'amber' : riskLevel === 2 ? 'red' : ''}`}>
-            {riskLevel === 0 ? (
-              <h2 className="safe-text">✅ You are safe</h2>
-            ) : (
-              <>
-                <h3>Check-in Alert</h3>
-                <p className="problem-text">
-                  ⚠️ {riskLevel === 1 ? 'Moderate risk detected! Are you okay?' : 'High risk detected! Are you okay?'}
-                </p>
-                <div className="checkin-buttons">
-                  <button className="ok-btn">I'm OK</button>
-                  {/* <-- THIS triggers the Need Help flow (user-side) */}
-                  <button className="need-help-btn" onClick={handleNeedHelp}>Need Help</button>
-                </div>
-              </>
-            )}
-          </div>
+          <div className={`feature checkin-banner ${
+  riskScore > 66 ? 'red' : riskScore > 33 ? 'amber' : ''
+}`}>
+  {riskScore <= 33 ? (
+    <h2 className="safe-text">✅ You are safe</h2>
+  ) : (
+    <>
+      <h3>Check-in Alert</h3>
+      <p className="problem-text">
+        ⚠️ {riskScore <= 66 ? 'Moderate risk detected! Are you okay?' : 'High risk detected! Are you okay?'}
+      </p>
+      <div className="checkin-buttons">
+        <button className="ok-btn">I'm OK</button>
+        <button className="need-help-btn" onClick={handleNeedHelp}>Need Help</button>
+      </div>
+    </>
+  )}
+</div>
+
+
 
           <div className="feature">
             <WeatherWidget />
