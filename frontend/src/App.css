@@ -405,3 +405,12 @@ footer {
   .map-section { height: 50vh; }
   .search-buttons { flex-direction: column; gap: 0.5rem; }
 }
+
+
+
+/* =========================
+Mapbox: Hide Mapbox attribution control (only use for local dev/testing) 
+=========================*/
+.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
+  display: none !important;
+}
