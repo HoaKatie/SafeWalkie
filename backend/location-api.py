@@ -4,6 +4,9 @@ import json
 from datetime import datetime
 import uuid
 import os, uuid, math, requests
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 app = Flask(__name__)
 
@@ -26,7 +29,7 @@ def publish_event(event_type, data):
         routing_key='location_updates',
         body=json.dumps(event)
     )
-    print(f"[x] Published event: {event}")
+    # print(f"[x] Published event: {event}")
 
 #-------------------------------
 # Helpers
