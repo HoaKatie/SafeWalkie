@@ -98,72 +98,79 @@ def rate_limited(session: WalkSession, alert_type: str, min_interval_sec: int) -
 # Real-time analytics (per-message)
 # =========================
 # ========= safety analysis =========
-OFF_ROUTE_TRIGGER_M = 50.0   # strict corridor (GPS trusted)
-SUSPICIOUS_SPEED_MPS = 12.0  # jump/glitch detection
+# =========================
+# Simplified Off-Route Analysis
+# =========================
+def nearest_point_distance(lat, lon, route):
+    """Return min distance (m) from (lat, lon) to route polyline."""
+    if not route or len(route) < 2:
+        return None
+
+    def haversine_m(p1, p2):
+        R = 6371000
+        phi1, phi2 = math.radians(p1[0]), math.radians(p2[0])
+        dphi = math.radians(p2[0] - p1[0])
+        dlambda = math.radians(p2[1] - p1[1])
+        a = math.sin(dphi / 2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2)**2
+        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    min_dist = float("inf")
+    for i in range(len(route) - 1):
+        a, b = route[i], route[i + 1]
+        # convert to meters using simple projection near first point
+        x1, y1 = _to_local_xy(a["lat"], a["lon"], lat, lon)
+        x2, y2 = _to_local_xy(b["lat"], b["lon"], lat, lon)
+        px, py = 0, 0  # current point
+        dist, *_ = _point_segment_distance_xy(px, py, x1, y1, x2, y2)
+        if dist < min_dist:
+            min_dist = dist
+    return min_dist
+
+
+def _to_local_xy(lat, lon, lat0, lon0):
+    """Approximate conversion to local XY coordinates in meters."""
+    R = 6371000
+    dlon = math.radians(lon - lon0)
+    dlat = math.radians(lat - lat0)
+    x = dlon * R * math.cos(math.radians(lat0))
+    y = dlat * R
+    return x, y
+
+
+def _point_segment_distance_xy(px, py, ax, ay, bx, by):
+    """Distance from point P to segment AB (in meters)."""
+    vx, vy = bx - ax, by - ay
+    wx, wy = px - ax, py - ay
+    c1 = wx * vx + wy * vy
+    c2 = vx * vx + vy * vy
+    t = max(0, min(1, c1 / c2)) if c2 > 0 else 0
+    projx, projy = ax + t * vx, ay + t * vy
+    dx, dy = px - projx, py - projy
+    return math.hypot(dx, dy), t, projx, projy
+
 
 def perform_safety_analysis(user_id: str, session: WalkSession):
+    """Simplified safety + off-route checks."""
     if len(session.locations) < 2:
         return
 
-    now = datetime.utcnow()
     last = session.locations[-1]
     prev = session.locations[-2]
 
-    lat1, lon1 = prev["lat"], prev["lon"]
-    lat2, lon2 = last["lat"], last["lon"]
-    dist = haversine(lat1, lon1, lat2, lon2)
+    # Compute basic speed
+    dist = haversine(prev["lat"], prev["lon"], last["lat"], last["lon"])
+    dt = max(1e-6, (datetime.fromisoformat(last["timestamp"]) - datetime.fromisoformat(prev["timestamp"])).total_seconds())
 
-    t1 = datetime.fromisoformat(prev["timestamp"])
-    t2 = datetime.fromisoformat(last["timestamp"])
-    dt = max(1e-6, (t2 - t1).total_seconds())
-    speed_mps = dist / dt
+    # Simple off-route alert
+    if session.route:
+        dist_from_route = nearest_point_distance(last["lat"], last["lon"], session.route)
+        if dist_from_route and dist_from_route > OFF_ROUTE_THRESHOLD_M and not rate_limited(session, "off_route", 5):
+            publish_event(ALERT_QUEUE, "off_route", {
+                "user_id": user_id,
+                "walking_session_id": session.walking_session_id,
+                "message": f"Off-route by ~{int(dist_from_route)} m (>{OFF_ROUTE_THRESHOLD_M} m threshold)"
+            })
 
-    sid = getattr(session, "walking_session_id", None)
-
-    # A) suspicious jump via speed
-    if speed_mps > SUSPICIOUS_SPEED_MPS and not rate_limited(session, "suspicious_jump", 120):
-        publish_event(ALERT_QUEUE, "suspicious_jump", {
-            "user_id": user_id,
-            "walking_session_id": sid,
-            "message": f"Unusual speed {speed_mps:.1f} m/s detected."
-        })
-
-    # B) late-night walk
-    if (now.hour >= 23 or now.hour <= 5) and not rate_limited(session, "night_time", 600):
-        publish_event(ALERT_QUEUE, "night_time", {
-            "user_id": user_id,
-            "walking_session_id": sid,
-            "message": "Walking late at night — stay safe."
-        })
-
-    # C) off-route via perpendicular-to-polyline (strict corridor)
-    _ensure_route_cache(session)
-    if getattr(session, "_route_cache", None):
-        corridor = OFF_ROUTE_TRIGGER_M
-        hit = _nearest_on_polyline(lat2, lon2, session)
-        if hit:
-            off_m = hit["dist_m"]
-            # Hysteresis
-            K = 3       # 3 consecutive off readings
-            decay = 1.0 # drop faster when back on route
-
-            if session._on_route_since is None:
-                session._on_route_since = t2
-
-            if off_m > corridor:
-                session._off_route_score += 1.0
-            else:
-                session._off_route_score = max(0.0, session._off_route_score - decay)
-                session._on_route_since = t2
-
-            session._along_m = hit["along_m"]
-
-            if session._off_route_score >= K and not rate_limited(session, "off_route", 180):
-                publish_event(ALERT_QUEUE, "off_route", {
-                    "user_id": user_id,
-                    "walking_session_id": sid,
-                    "message": f"Off-route by ~{int(off_m)} m (threshold {int(corridor)} m)."
-                })
 
 # =========================
 # Background watchdog: inactivity detection (even if no new messages)
