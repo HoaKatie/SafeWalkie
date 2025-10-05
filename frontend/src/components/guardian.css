@@ -1,65 +1,75 @@
-/* guardian.css for Mapbox version */
+/* Guardian Dashboard CSS for Mapbox version */
 
+/* Main wrapper for map + user info */
 .guardian-mapbox-wrapper {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  align-items: center; /* căn giữa */
-}
-
-.guardian-mapbox-container {
-  width: 700%;        /* giảm chiều rộng */
-  max-width: 900px;  /* giới hạn tối đa */
-  height: 600px;     /* chiều cao cố định */
-  border: 3px solid #ff6b00; /* viền màu cam */
-  border-radius: 12px;        /* bo góc */
-  box-shadow: 0 0 10px rgba(0,0,0,0.5); /* optional bóng */
-}
-
-.guardian-user-info {
-  background-color: #1a1a1a;
-  color: #fff;
+  align-items: center; /* center content horizontally */
+  background-color: #f5f7fa; /* soft light background */
   padding: 1rem;
-  border-radius: 8px;
-  width: 80%;
+  min-height: 100vh;
+}
+
+/* Map container styling */
+.guardian-mapbox-container {
+  width: 90%;            /* responsive width */
+  max-width: 900px;      /* maximum width */
+  height: 600px;         /* fixed height */
+  border: 3px solid #ff6b00; /* bright orange border */
+  border-radius: 12px;   /* rounded corners */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* subtle shadow */
+  background-color: #e0e7ff; /* soft blue base instead of black */
+}
+
+/* User info panel below map */
+.guardian-user-info {
+  background-color: #edf2f7; /* light grayish-blue */
+  color: #1a202c; /* dark slate text */
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  width: 85%;
   max-width: 800px;
   text-align: left;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-/* origin marker (small pin) */
+/* Small circular origin marker (greenish) */
 .mb-origin-marker {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #2a9d8f;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  background: #2a9d8f; /* teal */
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   transform: translate(-50%, -50%);
 }
 
-/* destination marker (small pin) */
+/* Small circular destination marker (reddish) */
 .mb-destination-marker {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #e76f51;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  background: #e76f51; /* soft red-orange */
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   transform: translate(-50%, -50%);
 }
 
-/* pulsing user marker */
+/* Pulsing marker for current user location (blue) */
 .mb-pulse-marker {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #4da6ff;
+  background: #4da6ff; /* bright blue */
   border: 2px solid rgba(255,255,255,0.9);
   box-shadow: 0 0 0 rgba(77,166,255,0.6);
   transform: translate(-50%, -50%);
   position: relative;
 }
 
+/* Pulsing effect */
 .mb-pulse-marker::after {
   content: "";
   position: absolute;
@@ -74,6 +84,7 @@
   z-index: -1;
 }
 
+/* Pulse animation keyframes */
 @keyframes pulse {
   0% {
     transform: translate(-50%, -50%) scale(0.6);
@@ -89,4 +100,4 @@
   }
 }
 
-/* route line is styled via mapbox paint (no extra CSS needed) */
+/* Note: Map route line styling is handled via Mapbox paint options */

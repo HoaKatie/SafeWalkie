@@ -5,19 +5,18 @@ body, html {
   margin: 0;
   padding: 0;
   font-family: 'Poppins', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  background: linear-gradient(135deg, #ffebf0, #ffe0f5);
+  background: linear-gradient(135deg, #ffeaf0, #fff0f6);
   color: #333;
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .app {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 2rem;
   width: 100%;
   max-width: 1200px;
@@ -41,32 +40,37 @@ body, html {
   background: linear-gradient(90deg, #ff4da6, #ff66c4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: 700;
 }
 
 .header p {
   font-size: 1.2rem;
   color: #cc3366;
   margin: 0;
+  font-weight: 500;
 }
 
 /* =========================
-   Search Section
+   Search Section Horizontal Layout
    ========================= */
 .search-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* horizontal */
   align-items: center;
   gap: 1rem;
-  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap; /* wrap on smaller screens */
   width: 100%;
+  margin-bottom: 2rem;
 }
 
 .search-container input {
+  flex: 1 1 250px; /* grow/shrink with max */
+  max-width: 300px;
   padding: 0.8rem 1rem;
   font-size: 1rem;
   border-radius: 50px;
   border: 2px solid #ff99cc;
-  width: 300px;
   background-color: #fff0f6;
   color: #333;
   text-align: center;
@@ -85,24 +89,28 @@ body, html {
 .search-container input:focus {
   outline: none;
   border-color: #ff4da6;
-  box-shadow: 0 0 10px rgba(255, 77, 166, 0.5);
+  box-shadow: 0 0 10px rgba(255, 77, 166, 0.3);
 }
 
-/* Buttons wrapper */
+/* =========================
+   Search Buttons Horizontal
+   ========================= */
 .search-buttons {
   display: flex;
   gap: 0.5rem;
-  justify-content: center;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
 }
 
-/* General button styles */
 .search-buttons button {
+  flex: 0 0 auto; /* fixed size */
   padding: 0.8rem 1.5rem;
   font-size: 1rem;
   border-radius: 50px;
   border: none;
   cursor: pointer;
+  font-weight: 600;
   transition: all 0.3s ease;
 }
 
@@ -110,81 +118,61 @@ body, html {
 .search-buttons button:first-child {
   background: linear-gradient(90deg, #ff4da6, #ff66c4);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 77, 166, 0.3);
 }
 .search-buttons button:first-child:hover {
   background: linear-gradient(90deg, #e60073, #ff3399);
   transform: translateY(-2px);
 }
 
-/* Emergency button */
+/* Emergency Button */
 .emergency-btn {
-  background: linear-gradient(90deg, #ff0000, #cc0000);
+  background: linear-gradient(90deg, #ff4d4d, #ff1a1a);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 26, 26, 0.3);
 }
 .emergency-btn:hover {
   background: linear-gradient(90deg, #cc0000, #990000);
   transform: translateY(-2px);
 }
 
-/* Safe-word setup row (input + label) */
-.safe-word-setup {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  margin-top: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
+/* Safe Word Button */
+.safe-word-btn {
+  background: linear-gradient(90deg, #ff99cc, #ff66c4);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 77, 166, 0.2);
+}
+.safe-word-btn:hover {
+  background: linear-gradient(90deg, #ff66a6, #ff4da6);
+  transform: translateY(-2px);
 }
 
-.safe-word-setup label {
-  font-size: 0.9rem;
-  color: #cc3366;
-}
-
-.safe-word-setup input {
-  padding: 0.5rem 0.8rem;
-  border-radius: 50px;
-  border: 2px solid #ffd1e6;
-  background: #fff7fb;
-  width: 180px;
-  text-align: center;
-}
-
-.safe-word-setup .hint {
-  display: block;
-  width: 100%;
-  text-align: center;
-  color: #aa5a82;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-}
-
-/* Keep buttons in same horizontal row (Start / Emergency / Safe Word) */
-.search-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Safe Word active pulse already in your CSS; ensure it exists: */
+/* Safe Word Active Pulse */
 @keyframes pulse {
   0% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
   50% { box-shadow: 0 0 15px rgba(255, 51, 0, 0.9); }
   100% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
 }
-
 .safe-word-btn.active {
   animation: pulse 1.2s infinite;
 }
 
+/* Safe Word input inline with buttons */
+.safe-word-setup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 
-/* Pulse animation for Safe Word active state */
-@keyframes pulse {
-  0% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
-  50% { box-shadow: 0 0 15px rgba(255, 51, 0, 0.9); }
-  100% { box-shadow: 0 0 0px rgba(255, 51, 0, 0.7); }
+.safe-word-setup input {
+  width: 150px;
+  padding: 0.5rem 0.8rem;
+  border-radius: 50px;
+  border: 2px solid #ffd1e6;
+  background: #fff7fb;
+  text-align: center;
 }
 
 /* =========================
@@ -196,7 +184,7 @@ body, html {
   height: 60vh;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(255, 77, 166, 0.3);
+  box-shadow: 0 10px 25px rgba(255, 77, 166, 0.25);
   margin-bottom: 2rem;
 }
 
@@ -221,17 +209,14 @@ body, html {
   box-shadow: 0 8px 20px rgba(255, 77, 166, 0.2);
   transition: all 0.3s ease;
 }
-
 .feature:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(255, 77, 166, 0.4);
+  box-shadow: 0 12px 30px rgba(255, 77, 166, 0.35);
 }
 
-/* =========================
-   Weather Widget
-   ========================= */
+/* Weather Widget */
 .weather-widget {
-  background: linear-gradient(135deg, #ffebf0, #ffe0f5);
+  background: linear-gradient(135deg, #ffeaf0, #fff0f6);
   padding: 1.5rem 2rem;
   border-radius: 20px;
   width: 250px;
@@ -241,35 +226,21 @@ body, html {
   transition: transform 0.3s ease;
   margin: 0 auto;
 }
-
 .weather-widget:hover {
   transform: translateY(-5px);
 }
 
-.weather-temp {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #ff4da6;
-  margin: 0.5rem 0;
-}
-
-.weather-condition {
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: #cc3366;
-}
-
 /* =========================
-  Suggestions dropdown 
-  ========================= */
+   Suggestions Dropdown
+   ========================= */
 .suggestions-dropdown {
   position: absolute;
   top: 3rem;
   left: 0;
   width: 100%;
-  background: white;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   max-height: 200px;
   overflow-y: auto;
   z-index: 999;
@@ -281,204 +252,46 @@ body, html {
 .suggestions-dropdown li {
   padding: 0.8rem 1rem;
   cursor: pointer;
-  border-bottom: 1px solid #f2f2f2;
+  transition: background 0.2s ease;
 }
-
 .suggestions-dropdown li:hover {
   background: #ffe0f5;
-}
-
-/* Floating toggle inside map */
-.mode-btn-map {
-  border: none;
-  padding: 0.5rem 1.2rem;
-  border-radius: 20px;
-  background: #f7c4d8; /* soft light pink by default */
-  color: #cc3366;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(255, 77, 166, 0.15);
-}
-
-.mode-btn-map.active {
-  background: linear-gradient(90deg, #ff4da6, #ff66c4); /* strong pink */
-  color: #fcf8fc;
-  box-shadow: 0 3px 8px rgba(255, 77, 166, 0.3);
-}
-
-.mode-btn-map:hover {
-  background: #f9c8dc; /* light hover pink */
-  transform: translateY(-1px);
-}
-
-/* keep the group container neat */
-.mode-toggle-map {
-  display: flex;
-  gap: 0.5rem;
-  background: #f8f6f8;
-  border-radius: 12px;
-  padding: 6px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-
-/* =========================
-   Risk Meter
-   ========================= */
-.risk-meter .meter-bar {
-  position: relative;
-  height: 20px;
-  border-radius: 20px;
-  display: flex;
-  overflow: hidden;
-  margin: 1rem 0;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.meter-green { background-color: #28a745; width: 33.33%; }
-.meter-amber { background-color: #ffc107; width: 33.33%; }
-.meter-red { background-color: #dc3545; width: 33.33%; }
-
-.meter-point {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 18px;
-  height: 18px;
-  background-color: #fff;
-  border: 3px solid #ff4da6;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: left 0.3s;
-}
-
-.meter-text {
-  margin: 0;
-  font-weight: bold;
-  color: #cc3366;
-}
-
-/* =========================
-   Check-in Banner
-   ========================= */
-.checkin-banner {
-  padding: 1.5rem 2rem;
-  border-radius: 20px;
-  width: 280px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  background: linear-gradient(135deg, #fff0f6, #ffe0f5);
-  box-shadow: 0 8px 20px rgba(255, 77, 166, 0.2);
-  transition: transform 0.3s ease;
-}
-
-.checkin-banner:hover {
-  transform: translateY(-5px);
-}
-
-.checkin-banner h3 {
-  margin: 0;
-  color: #cc3366;
-}
-
-
-/* =========================
-   Footer
-   ========================= */
-footer {
-  margin-top: auto;
-  padding: 1rem 0;
-  color: #cc3366;
-  font-weight: 500;
-  text-align: center;
 }
 
 /* =========================
    Responsive
    ========================= */
 @media (max-width: 768px) {
-  .search-container input { width: 90%; }
-  .features, .feature { flex-direction: column; width: 90%; }
+  .search-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .search-container input {
+    width: 90%;
+  }
+  .features, .feature {
+    flex-direction: column;
+    width: 90%;
+  }
   .map-section { height: 50vh; }
-  .search-buttons { flex-direction: column; gap: 0.5rem; }
 }
-
-
-
-/* =========================
-Mapbox: Hide Mapbox attribution control (only use for local dev/testing) 
-=========================*/
-.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
-  display: none !important;
-}
-
-/* =========================
-Emergency Contact Setup
-=========================*/
-.emergency-contact-setup {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
-}
-
-.emergency-contact-setup input {
-  padding: 0.5rem 0.8rem;
+.guardian-toggle-btn {
+  position: fixed;      /* stays fixed on screen */
+  top: 20px;            /* distance from top */
+  right: 20px;          /* distance from right */
+  z-index: 1000;        /* on top of everything */
+  padding: 0.8rem 1.5rem;
   border-radius: 50px;
-  border: 2px solid #ffd1e6;
-  background: #fff7fb;
-  width: 180px;
-  text-align: center;
-}
-
-.emergency-contact-setup button {
+  border: none;
   background: linear-gradient(90deg, #ff4da6, #ff66c4);
   color: #fff;
-  border: none;
-  border-radius: 50px;
-  padding: 0.5rem 1rem;
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 77, 166, 0.3);
+  transition: all 0.3s ease;
 }
-.emergency-contact-setup button:hover {
+
+.guardian-toggle-btn:hover {
   background: linear-gradient(90deg, #e60073, #ff3399);
-}
-
-
-/* =========================
-Guardian
-=========================*/
-
-.guardian-fullscreen {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 999;
-  background-color: #f8f9fa;
-}
-
-.view-toggle {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin: 10px 0;
-}
-
-.view-toggle button {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.view-toggle button:hover {
-  background: #0056b3;
+  transform: translateY(-2px);
 }

@@ -503,15 +503,7 @@ function App() {
             Open Guardian Dashboard
           </button>
 
-          {/* user phone input (shown to guardians when distress triggered) */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <label style={{ fontSize: 12, color: "#555" }}>Your phone</label>
-            <input
-              style={{ padding: "6px 8px", borderRadius: 6 }}
-              value={userPhone}
-              onChange={(e) => setUserPhone(e.target.value)}
-            />
-          </div>
+          
         </div>
       </header>
 
