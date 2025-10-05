@@ -414,3 +414,33 @@ Mapbox: Hide Mapbox attribution control (only use for local dev/testing)
 .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
   display: none !important;
 }
+
+.guardian-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  background-color: #f8f9fa;
+}
+
+.view-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 10px 0;
+}
+
+.view-toggle button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.view-toggle button:hover {
+  background: #0056b3;
+}

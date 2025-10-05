@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import './App.css';
 import MapView from './components/MapView';
 import WeatherWidget from './components/WeatherWidget';
+import GuardianDashboard from "./components/GuardianDashboard";
 
 function App() {
   const [riskLevel, setRiskLevel] = useState(1);
@@ -17,17 +18,29 @@ function App() {
   const emergencyAudioRef = useRef(null);
   const [emergencyOn, setEmergencyOn] = useState(false);
 
+  const [userPhone, setUserPhone] = useState("+1-416-555-0000"); // user phone shown to guardian
   const [sessionId, setSessionId] = useState(null);
   const [routeCoords, setRouteCoords] = useState(null); // [[lon,lat], ...] from BE
 
+  // modal + emergency states
+  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
+  const [emergencyPhones, setEmergencyPhones] = useState([
+    { id: 1, label: "Police (default)", number: "+112" },
+    { id: 2, label: "Local Security", number: "+1-416-555-0000" },
+    { id: 3, label: "Guardian Hotline", number: "+1-416-555-1111" },
+  ]);
+
+  // guardian view full-screen toggle
+  const [showGuardian, setShowGuardian] = useState(false);
+
   function getOrCreateClientId() {
-  let id = localStorage.getItem("client_id");
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem("client_id", id);
+    let id = localStorage.getItem("client_id");
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem("client_id", id);
+    }
+    return id;
   }
-  return id;
-}
   const clientId = getOrCreateClientId();
   
   // translate score → UI level/position
@@ -49,6 +62,8 @@ function App() {
       }
     };
   }, []);
+  // simulate/sync interval ref for live updates when help active
+  const liveIntervalRef = useRef(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -66,39 +81,44 @@ function App() {
     }
   }, []);
 
-  // 🔍 Autocomplete from Mapbox Geocoding API
+
+  
+  // Autocomplete from Mapbox Geocoding API
   useEffect(() => {
-  const fetchSuggestions = async () => {
-    if (destination.length < 3) {
-      setSuggestions([]);
-      setOpenSuggestions(false); // 👈 hide when input is short
-      return;
-    }
+    const fetchSuggestions = async () => {
+      if (destination.length < 3) {
+        setSuggestions([]);
+        setOpenSuggestions(false);
+        return;
+      }
 
-    const token = import.meta.env.VITE_MAPBOX_TOKEN;
-    let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-      destination
-    )}.json?access_token=${token}&autocomplete=true&limit=5`;
+      const token = import.meta.env.VITE_MAPBOX_TOKEN;
+      let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        destination
+      )}.json?access_token=${token}&autocomplete=true&limit=5`;
 
-    if (userLocation) {
-      url += `&proximity=${userLocation.longitude},${userLocation.latitude}`;
-      url += `&country=ca`; // keep your Canada bias
-    }
+      if (userLocation) {
+        url += `&proximity=${userLocation.longitude},${userLocation.latitude}`;
+        url += `&country=ca`;
+      }
 
-    const res = await fetch(url);
-    const data = await res.json();
-    setSuggestions(data.features || []);
-  };
-  fetchSuggestions();
-}, [destination, userLocation]); // 👈 include userLocation so bias applies once it's known
-
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        setSuggestions(data.features || []);
+      } catch (e) {
+        console.warn("Failed to fetch suggestions", e);
+      }
+    };
+    fetchSuggestions();
+  }, [destination, userLocation]);
 
   const handleSelect = (place) => {
     setDestination(place.place_name);
     setSelectedCoords(place.geometry.coordinates);
-    setOpenSuggestions(false);   // 👈 explicitly close dropdown
-    setSuggestions([]);          // clear items
-    setTriggerRoute(false);      // keep requiring "Start Route"
+    setOpenSuggestions(false);
+    setSuggestions([]);
+    setTriggerRoute(false);
     console.log('Selected place:', place);
   };
 
@@ -118,24 +138,32 @@ function App() {
       end_location: selectedCoords
     };
 
-    const res = await fetch("/start_walk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch("/start_walk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `Backend error ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Backend error ${res.status}`);
+      }
+
+      const json = await res.json(); // expecting { walking_session_id, route: [[lon,lat], ...] }
+      setSessionId(json.walking_session_id);
+      setRouteCoords(json.route || null);
+    } catch (e) {
+      console.warn("startWalkFlow failed, using simulated route", e);
+      // fallback: generate simulated route (lon,lat pairs)
+      const simRoute = generateStraightRoute([userLocation.longitude, userLocation.latitude], selectedCoords, 20);
+      setSessionId(`sim-${Date.now()}`);
+      setRouteCoords(simRoute);
     }
-
-    const json = await res.json(); // { walking_session_id, route: [[lon,lat], ...] }
-    setSessionId(json.walking_session_id);
-    setRouteCoords(json.route);
   }
 
-  // Safe word states
-  const [safeWord, setSafeWord] = useState('help'); // default safe word
+  // Safe word and recognition (unchanged)
+  const [safeWord, setSafeWord] = useState('help');
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
 
@@ -147,14 +175,13 @@ function App() {
     }
 
     setTriggerRoute((prev) => !prev);
-    setSuggestions([]); // close dropdown
-    startWalkFlow() // initiate walk session, call BE
+    setSuggestions([]);
+    startWalkFlow();
   };
 
-  // Disable Enter key triggering any route search
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // stop form submission or unwanted route triggering
+      e.preventDefault();
       console.log("Enter key pressed — ignored. Use Start Route button instead.");
     }
   };
@@ -262,46 +289,200 @@ function App() {
     }
   };
 
-  // Cleanup on unmount: stop recognition if running
   useEffect(() => {
     return () => {
       try {
         recognitionRef.current?.stop();
-      } catch (e) {
-        // ignore
+      } catch (e) {}
+      // clear live interval if any
+      if (liveIntervalRef.current) {
+        clearInterval(liveIntervalRef.current);
+        liveIntervalRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-  if (!sessionId) return;           // wait until /start_walk returns
-  const t = setInterval(async () => {
-    try {
-      const res = await fetch(`/risk/latest?sid=${sessionId}`);
-      if (!res.ok) return;
-      const json = await res.json();   // { riskScore: number }
-      if (typeof json.riskScore === 'number') {
-        setRiskScore(json.riskScore);
-        const { level, pos } = scoreToUi(json.riskScore);
-        setRiskLevel(level);
-        setRiskPosition(pos);
+    if (!sessionId) return;           // wait until /start_walk returns
+    const t = setInterval(async () => {
+      try {
+        const res = await fetch(`/risk/latest?sid=${sessionId}`);
+        if (!res.ok) return;
+        const json = await res.json();   // { riskScore: number }
+        if (typeof json.riskScore === 'number') {
+          setRiskScore(json.riskScore);
+          const { level, pos } = scoreToUi(json.riskScore);
+          setRiskLevel(level);
+          setRiskPosition(pos);
+        }
+      } catch (e) {
+        // ignore transient network errors
       }
+    }, 3000); // poll every 3s
+
+    return () => clearInterval(t);
+  }, [sessionId]);
+
+   // ---------- NEW: helpers for Need Help -> notify guardians & broadcast via localStorage ----------
+  function callNumber(number) {
+    const raw = number.replace(/\s+/g, "");
+    window.open(`tel:${raw}`, "_self");
+  }
+
+  // build payload for distress event
+  function buildDistressPayload(reason = "manual_need_help") {
+    const origin = userLocation ? [userLocation.longitude, userLocation.latitude] : null;
+    const payload = {
+      type: "distress",
+      userId: clientId,
+      sessionId: sessionId || `session-${Date.now()}`,
+      phone: userPhone,
+      origin: origin, // [lon,lat]
+      destination: selectedCoords || null, // [lon,lat]
+      route: routeCoords || null, // [[lon,lat],...]
+      reason,
+      timestamp: new Date().toISOString(),
+    };
+    return payload;
+  }
+
+  // notify backend (best-effort) and write localStorage copy for GuardianDashboard demo
+  async function notifyGuardians(payload) {
+    // write to localStorage so guardian UI in same browser sees it live (demo adapter)
+    try {
+      localStorage.setItem("last_distress", JSON.stringify(payload));
     } catch (e) {
-      // ignore transient network errors
+      console.warn("failed to write distress to localStorage", e);
     }
-  }, 3000); // poll every 3s
 
-  return () => clearInterval(t);
-}, [sessionId]);
+    // try backend endpoint (non-blocking)
+    try {
+      await fetch("/api/notify_guardians", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      console.warn("notify_guardians request failed (server may be missing):", e);
+    }
+  }
 
+  // When need help is triggered: open modal, notify backend, and start broadcasting live location updates
+  const handleNeedHelp = async () => {
+    setShowNeedHelpModal(true);
+    const payload = buildDistressPayload("manual_need_help");
+    await notifyGuardians(payload);
+    startLiveLocationBroadcast(payload);
+  };
 
+  // broadcast simulated live location updates along route to localStorage so GuardianDashboard reads them
+  function startLiveLocationBroadcast(initialPayload) {
+    // clear previous interval if any
+    if (liveIntervalRef.current) {
+      clearInterval(liveIntervalRef.current);
+      liveIntervalRef.current = null;
+    }
+
+    const route = initialPayload.route && initialPayload.route.length ? initialPayload.route : (
+      initialPayload.destination && initialPayload.origin ? generateStraightRoute(initialPayload.origin, initialPayload.destination, 20) : null
+    );
+
+    if (!route || route.length === 0) {
+      // If no route, just write one snapshot (current location)
+      try {
+        localStorage.setItem("last_distress", JSON.stringify(initialPayload));
+      } catch (e) {}
+      return;
+    }
+
+    // convert route (lon,lat) -> array of points to step through
+    const points = route.map(pt => Array.isArray(pt) ? pt : null).filter(Boolean);
+
+    let i = 0;
+    // update every 3s
+    liveIntervalRef.current = setInterval(() => {
+      i = Math.min(i + 1, points.length - 1);
+      const lonlat = points[i];
+      // update app's userLocation (used by user map)
+      setUserLocation({ longitude: lonlat[0], latitude: lonlat[1] });
+
+      // update payload and write to localStorage for guardians
+      const updated = {
+        ...initialPayload,
+        location: lonlat, // current [lon,lat]
+        timestamp: new Date().toISOString()
+      };
+      try {
+        localStorage.setItem("last_distress", JSON.stringify(updated));
+      } catch (e) {}
+      // if reached end, keep broadcasting last location (or clear interval if you prefer)
+      if (i >= points.length - 1) {
+        // stop auto-advance but keep last location present
+        clearInterval(liveIntervalRef.current);
+        liveIntervalRef.current = null;
+      }
+    }, 3000);
+  }
+
+  // helper: generate simple straight route between two lonlat points (backend expects [[lon,lat],...])
+  function generateStraightRoute(aLonLat, bLonLat, n = 20) {
+    const aLon = aLonLat[0], aLat = aLonLat[1];
+    const bLon = bLonLat[0], bLat = bLonLat[1];
+    const arr = [];
+    for (let i = 0; i < n; i++) {
+      const t = i / Math.max(1, n - 1);
+      arr.push([aLon + (bLon - aLon) * t + (Math.random() - 0.5) * 0.0002, aLat + (bLat - aLat) * t + (Math.random() - 0.5) * 0.0002]);
+    }
+    return arr;
+  }
+
+  // -------------- RENDER --------------
+  // If guardian view requested → show full-screen GuardianDashboard
+  if (showGuardian) {
+    return (
+      <div style={{ height: "100vh" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#091029", color: "#fff" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <strong>SafeWalkie — Guardian</strong>
+            <span style={{ fontSize: 13, color: "#cbd5e1" }}>Dashboard</span>
+          </div>
+          <div>
+            <button onClick={() => setShowGuardian(false)} style={{ marginRight: 8, padding: "6px 10px", borderRadius: 8, cursor: "pointer" }}>Go to User App</button>
+            <button onClick={() => { /* refresh */ window.location.reload(); }} style={{ padding: "6px 10px", borderRadius: 8, cursor: "pointer" }}>Refresh</button>
+          </div>
+        </div>
+
+        <GuardianDashboard wsUrl={null} />
+      </div>
+    );
+  }
+
+  // Default: user UI
   return (
     <div className="app">
       {/* Header */}
-      <header className="header">
-        <h1>SAFE WALKIE</h1>
-        <p>Your safe navigation assistant</p>
+      <header className="header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1>SAFE WALKIE</h1>
+          <p>Your safe navigation assistant</p>
+        </div>
+
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {/* quick guardian toggle for testing */}
+          <button onClick={() => setShowGuardian(true)} style={{ padding: "6px 10px", borderRadius: 8, cursor: "pointer" }}>
+            Open Guardian Dashboard
+          </button>
+
+          {/* user phone input (shown to guardians when distress triggered) */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <label style={{ fontSize: 12, color: "#555" }}>Your phone</label>
+            <input
+              style={{ padding: "6px 8px", borderRadius: 6 }}
+              value={userPhone}
+              onChange={(e) => setUserPhone(e.target.value)}
+            />
+          </div>
+        </div>
       </header>
 
       <main>
@@ -314,11 +495,11 @@ function App() {
               value={destination}
               onChange={(e) => {
                 setDestination(e.target.value);
-                setOpenSuggestions(true); // 👈 open while typing
+                setOpenSuggestions(true);
               }}
               onKeyDown={handleKeyDown}
             />
-            {openSuggestions && suggestions.length > 0 && ( // 👈 only show when open
+            {openSuggestions && suggestions.length > 0 && (
               <ul className="suggestions-dropdown">
                 {suggestions.map((s) => (
                   <li key={s.id} onClick={() => handleSelect(s)}>
@@ -344,7 +525,6 @@ function App() {
             </button>
           </div>
 
-          {/* Safe word setter (user can change the phrase) */}
           <div className="safe-word-setup">
             <label htmlFor="safeWordInput">Safe word:</label>
             <input
@@ -365,12 +545,13 @@ function App() {
             mode={mode}
             setMode={setMode}
             triggerRoute={triggerRoute}
+            // pass userLocation so MapView can show user's live location
+            userLocation={userLocation}
           />
         </div>
 
-        {/* Feature Section (unchanged) */}
+        {/* Feature Section */}
         <div className="features">
-          {/* Risk Meter */}
           <div className="feature risk-meter">
             <h3>Risk Meter</h3>
             <div className="meter-bar">
@@ -384,7 +565,6 @@ function App() {
             </p>
           </div>
 
-          {/* Check-in Banner */}
           <div className={`feature checkin-banner ${riskLevel === 1 ? 'amber' : riskLevel === 2 ? 'red' : ''}`}>
             {riskLevel === 0 ? (
               <h2 className="safe-text">✅ You are safe</h2>
@@ -396,20 +576,68 @@ function App() {
                 </p>
                 <div className="checkin-buttons">
                   <button className="ok-btn">I'm OK</button>
-                  <button className="need-help-btn">Need Help</button>
+                  {/* <-- THIS triggers the Need Help flow (user-side) */}
+                  <button className="need-help-btn" onClick={handleNeedHelp}>Need Help</button>
                 </div>
               </>
             )}
           </div>
 
-          {/* Weather Widget */}
           <div className="feature">
             <WeatherWidget />
           </div>
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Need Help modal (user side) */}
+      {showNeedHelpModal && (
+        <div className="needhelp-modal-overlay" onClick={() => {
+          setShowNeedHelpModal(false);
+          if (liveIntervalRef.current) {
+            clearInterval(liveIntervalRef.current);
+            liveIntervalRef.current = null;
+          }
+        }}>
+          <div className="needhelp-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Emergency contacts</h3>
+            <p>Select a number to call immediately, or close to stay safe.</p>
+
+            <div className="needhelp-phones">
+              {emergencyPhones.map((p) => (
+                <button
+                  key={p.id}
+                  className="needhelp-phone-card"
+                  onClick={() => {
+                    callNumber(p.number);
+                    setShowNeedHelpModal(false);
+                    if (liveIntervalRef.current) {
+                      clearInterval(liveIntervalRef.current);
+                      liveIntervalRef.current = null;
+                    }
+                  }}
+                >
+                  <div>
+                    <strong>{p.label}</strong>
+                    <div className="phone-small">{p.number}</div>
+                  </div>
+                  <div className="call-emoji">📞</div>
+                </button>
+              ))}
+            </div>
+
+            <div className="needhelp-actions">
+              <button className="small" onClick={() => {
+                setShowNeedHelpModal(false);
+                if (liveIntervalRef.current) {
+                  clearInterval(liveIntervalRef.current);
+                  liveIntervalRef.current = null;
+                }
+              }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <footer>
         <p>&copy; 2025 Safe Walkie. All rights reserved.</p>
       </footer>
