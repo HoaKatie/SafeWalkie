@@ -439,3 +439,10 @@ body, html {
 }
 
 
+
+/* =========================
+Mapbox: Hide Mapbox attribution control (only use for local dev/testing) 
+=========================*/
+.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
+  display: none !important;
+}
