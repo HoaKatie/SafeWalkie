@@ -415,6 +415,44 @@ Mapbox: Hide Mapbox attribution control (only use for local dev/testing)
   display: none !important;
 }
 
+/* =========================
+Emergency Contact Setup
+=========================*/
+.emergency-contact-setup {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.emergency-contact-setup input {
+  padding: 0.5rem 0.8rem;
+  border-radius: 50px;
+  border: 2px solid #ffd1e6;
+  background: #fff7fb;
+  width: 180px;
+  text-align: center;
+}
+
+.emergency-contact-setup button {
+  background: linear-gradient(90deg, #ff4da6, #ff66c4);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.emergency-contact-setup button:hover {
+  background: linear-gradient(90deg, #e60073, #ff3399);
+}
+
+
+/* =========================
+Guardian
+=========================*/
+
 .guardian-fullscreen {
   width: 100vw;
   height: 100vh;

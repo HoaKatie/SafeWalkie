@@ -17,6 +17,9 @@ function App() {
 
   const emergencyAudioRef = useRef(null);
   const [emergencyOn, setEmergencyOn] = useState(false);
+  const [emergencyPhone, setEmergencyPhone] = useState("6135012873"); // hardcoded for now
+  // onChange={(e) => setEmergencyPhone(e.target.value)} // FOR LATER OK???
+
 
   const [userPhone, setUserPhone] = useState("+1-416-555-0000"); // user phone shown to guardian
   const [sessionId, setSessionId] = useState(null);
@@ -186,6 +189,29 @@ function App() {
     }
   };
 
+  // 🔔 Trigger emergency call (supports tel: for now, Twilio later)
+  const triggerEmergencyCall = async () => {
+    try {
+      if (/Mobi|Android/i.test(navigator.userAgent)) {
+        // On mobile browser: open native dialer directly
+        window.location.href = `tel:${emergencyPhone}`;
+      } else {
+        // On desktop: show simulated call or later use Twilio
+        console.log("Desktop environment detected — preparing backend/Twilio call...");
+        // placeholder for backend call (when you enable Twilio)
+        // await fetch('/api/call_emergency', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({ phone: emergencyPhone })
+        // });
+        alert(`Simulated call to ${emergencyPhone}`);
+      }
+    } catch (err) {
+      console.error("Error triggering call:", err);
+    }
+  };
+
+
 
   // Emergency action
   const ensureEmergencyAudio = () => {
@@ -202,6 +228,8 @@ function App() {
     const audio = ensureEmergencyAudio();
     audio.play().catch((err) => console.log('Audio play error:', err));
     setEmergencyOn(true);
+    // Trigger simulated call
+    triggerEmergencyCall();
   };
 
   // Button uses this to toggle ON/OFF
@@ -210,6 +238,8 @@ function App() {
     if (!emergencyOn) {
       audio.play().catch((err) => console.log('Audio play error:', err));
       setEmergencyOn(true);
+      // Trigger simulated call
+      triggerEmergencyCall();
     } else {
       audio.pause();
       audio.currentTime = 0; // reset to start
@@ -488,6 +518,19 @@ function App() {
       <main>
         {/* Search Bar + Buttons + Safe Word input */}
         <div className="search-container">
+          {/* Emergency Contact Number setup */}
+          <div className="emergency-contact-setup">
+            <label htmlFor="emergencyPhone">Emergency Phone:</label>
+            <input
+              id="emergencyPhone"
+              type="tel"
+              placeholder="Enter phone number"
+              // we can ignore actual input value for now, use dummy
+              onChange={(e) => console.log("Entered phone number:", e.target.value)}
+            />
+            <button onClick={() => alert("Phone saved (demo only)")}>Save</button>
+          </div>
+
           <div style={{ position: "relative" }}>
             <input
               type="text"
