@@ -1,25 +1,66 @@
-/* Minimal full-screen map container */
-.guardian-map-only {
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
+/* guardian.css for Mapbox version */
+
+.guardian-mapbox-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center; /* căn giữa */
 }
 
-/* Pulsing marker styles for the live user location */
-.pulse-icon {
+.guardian-mapbox-container {
+  width: 700%;        /* giảm chiều rộng */
+  max-width: 900px;  /* giới hạn tối đa */
+  height: 600px;     /* chiều cao cố định */
+  border: 3px solid #ff6b00; /* viền màu cam */
+  border-radius: 12px;        /* bo góc */
+  box-shadow: 0 0 10px rgba(0,0,0,0.5); /* optional bóng */
+}
+
+.guardian-user-info {
+  background-color: #1a1a1a;
+  color: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 800px;
+  text-align: left;
+}
+
+/* origin marker (small pin) */
+.mb-origin-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2a9d8f;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  transform: translate(-50%, -50%);
+}
+
+/* destination marker (small pin) */
+.mb-destination-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e76f51;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  transform: translate(-50%, -50%);
+}
+
+/* pulsing user marker */
+.mb-pulse-marker {
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: #4da6ff;
-  box-shadow: 0 0 0 rgba(77,166,255,0.6);
-  position: relative;
-  transform: translate(-50%, -50%);
   border: 2px solid rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 rgba(77,166,255,0.6);
+  transform: translate(-50%, -50%);
+  position: relative;
 }
 
-/* Create the pulsing ring using pseudo element */
-.pulse-icon::after {
+.mb-pulse-marker::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -29,7 +70,7 @@
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: rgba(77,166,255,0.25);
-  animation: pulse 1.8s infinite;
+  animation: pulse 1.6s infinite;
   z-index: -1;
 }
 
@@ -47,3 +88,5 @@
     opacity: 0;
   }
 }
+
+/* route line is styled via mapbox paint (no extra CSS needed) */

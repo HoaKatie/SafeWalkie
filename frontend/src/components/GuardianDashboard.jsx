@@ -1,147 +1,145 @@
-import React, { useEffect, useState, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Polyline, Circle } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+// src/components/GuardianDashboard.jsx
+import React, { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
 import "./guardian.css";
 
-/* fix leaflet icons */
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
-/* create a pulsing divIcon for user live location */
-function createPulseIcon() {
-  return L.divIcon({
-    className: "pulse-icon",
-    iconSize: [18, 18],
-    iconAnchor: [9, 9]
-  });
-}
+export default function GuardianDashboard({ style = "mapbox://styles/mapbox/streets-v11" }) {
+  const mapContainer = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef({ origin: null, destination: null, user: null });
+  const routeSourceId = "route-source";
 
-export default function GuardianDashboard() {
-  const [origin, setOrigin] = useState(null);         // [lat, lng]
-  const [destination, setDestination] = useState(null);// [lat, lng]
-  const [routeCoords, setRouteCoords] = useState([]); // [[lat,lng],...]
-  const [userPos, setUserPos] = useState(null);       // [lat,lng]
-  const [userAccuracy, setUserAccuracy] = useState(null); // meters if available
-  const pollRef = useRef(null);
+  const [userPhone, setUserPhone] = useState("");
 
-  // helper converts backend [lon, lat] -> [lat, lon]
-  const lonlatToLatLng = (p) => Array.isArray(p) && p.length >= 2 ? [p[1], p[0]] : null;
-
-  // Apply distress payload (from localStorage)
-  const applyDistress = (payload) => {
-    if (!payload) return;
-    const o = lonlatToLatLng(payload.origin);
-    const d = lonlatToLatLng(payload.destination);
-    setOrigin(o);
-    setDestination(d);
-
-    const r = (payload.route || []).map(lonlatToLatLng).filter(Boolean);
-    if (r.length) setRouteCoords(r);
-    else if (o && d) setRouteCoords([o, d]);
-
-    // payload.location is current user [lon,lat]
-    if (payload.location) {
-      const loc = lonlatToLatLng(payload.location);
-      setUserPos(loc);
-      // some payloads might include accuracy in meters
-      if (payload.accuracy) setUserAccuracy(payload.accuracy);
-      else setUserAccuracy(null);
-    }
-  };
-
-  // Read user live location object (last_user_location)
-  // expected format: { location: [lon,lat], accuracy?: number, timestamp?: iso }
-  const applyUserLive = (raw) => {
-    if (!raw) return;
-    try {
-      const obj = typeof raw === "string" ? JSON.parse(raw) : raw;
-      if (!obj) return;
-      const loc = obj.location ? lonlatToLatLng(obj.location) : null;
-      if (loc) {
-        setUserPos(loc);
-        setUserAccuracy(obj.accuracy || null);
-      }
-    } catch (e) { /* ignore parse errors */ }
-  };
+  const validLonLat = (p) => Array.isArray(p) && p.length >= 2 ? [p[0], p[1]] : null;
 
   useEffect(() => {
-    // initial load from last_distress and last_user_location
-    try {
-      const last = localStorage.getItem("last_distress");
-      if (last) applyDistress(JSON.parse(last));
-    } catch (e) {}
+    if (!mapboxgl.accessToken) {
+      console.error("Mapbox token is missing. Set VITE_MAPBOX_TOKEN in your .env");
+      return;
+    }
+
+    const map = new mapboxgl.Map({
+      container: mapContainer.current,
+      style,
+      center: [-79.3832, 43.6532],
+      zoom: 14,
+    });
+    mapRef.current = map;
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+
+    map.on("load", () => {
+      if (!map.getSource(routeSourceId)) {
+        map.addSource(routeSourceId, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: "route-line",
+          type: "line",
+          source: routeSourceId,
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#ff6b00", "line-width": 5, "line-dasharray": [2, 1.5] },
+        });
+      }
+    });
+
+    const setDomMarker = (id, lonlat, className) => {
+      if (markersRef.current[id]) {
+        markersRef.current[id].setLngLat(lonlat);
+        return;
+      }
+      const el = document.createElement("div");
+      el.className = className;
+      markersRef.current[id] = new mapboxgl.Marker(el).setLngLat(lonlat).addTo(map);
+    };
+
+    const applyPayload = (payload) => {
+      if (!payload) return;
+
+      if (payload.origin) {
+        const o = validLonLat(payload.origin);
+        if (o && map) setDomMarker("origin", o, "mb-origin-marker");
+      }
+      if (payload.destination) {
+        const d = validLonLat(payload.destination);
+        if (d && map) setDomMarker("destination", d, "mb-destination-marker");
+      }
+      const route = (payload.route && payload.route.length) ? payload.route.filter(Array.isArray) : null;
+      if (route && route.length && map.getSource(routeSourceId)) {
+        map.getSource(routeSourceId).setData({
+          type: "FeatureCollection",
+          features: [{ type: "Feature", geometry: { type: "LineString", coordinates: route } }],
+        });
+      }
+      if (payload.location) {
+        const user = validLonLat(payload.location);
+        if (user) {
+          if (!markersRef.current.user) {
+            const el = document.createElement("div");
+            el.className = "mb-pulse-marker";
+            markersRef.current.user = new mapboxgl.Marker(el, { anchor: "center" }).setLngLat(user).addTo(map);
+          } else {
+            markersRef.current.user.setLngLat(user);
+          }
+          try { map.easeTo({ center: user, offset: [0, -80], duration: 800 }); } catch {}
+        }
+      }
+      if (payload.phone) setUserPhone(payload.phone);
+    };
 
     try {
-      const live = localStorage.getItem("last_user_location");
-      if (live) applyUserLive(live);
-    } catch (e) {}
+      const raw = localStorage.getItem("last_distress");
+      if (raw) {
+        applyPayload(JSON.parse(raw));
+      } else {
+        const live = localStorage.getItem("last_user_location");
+        if (live) {
+          const parsed = JSON.parse(live);
+          if (parsed && parsed.location) applyPayload({ location: parsed.location, phone: parsed.phone });
+        }
+      }
+    } catch (e) { console.warn("Failed to parse localStorage initial values", e); }
 
-    // storage event listener (cross-tab)
     const onStorage = (e) => {
       if (!e.key) return;
       if (e.key === "last_distress" && e.newValue) {
-        try { applyDistress(JSON.parse(e.newValue)); } catch {}
+        try { applyPayload(JSON.parse(e.newValue)); } catch {}
       }
       if (e.key === "last_user_location" && e.newValue) {
-        try { applyUserLive(e.newValue); } catch {}
+        try { const obj = JSON.parse(e.newValue); if (obj && obj.location) applyPayload({ location: obj.location, phone: obj.phone }); } catch {}
       }
     };
     window.addEventListener("storage", onStorage);
 
-    // Polling every 2s to capture same-tab writes (some environments don't dispatch storage)
-    pollRef.current = setInterval(() => {
+    const poll = setInterval(() => {
       try {
         const live = localStorage.getItem("last_user_location");
-        if (live) applyUserLive(live);
+        if (live) {
+          const parsed = JSON.parse(live);
+          if (parsed && parsed.location) applyPayload({ location: parsed.location, phone: parsed.phone });
+        }
       } catch (e) {}
     }, 2000);
 
     return () => {
+      clearInterval(poll);
       window.removeEventListener("storage", onStorage);
-      if (pollRef.current) clearInterval(pollRef.current);
+      Object.values(markersRef.current).forEach(m => { try { m.remove(); } catch {} });
+      markersRef.current = {};
+      if (mapRef.current) { try { mapRef.current.remove(); } catch {} }
     };
-  }, []);
-
-  // center map on userPos if available, else origin or fallback coords
-  const center = userPos || origin || [43.6532, -79.3832];
-
-  const pulseIcon = createPulseIcon();
+  }, [style]);
 
   return (
-    <div className="guardian-map-only">
-      <MapContainer center={center} zoom={14} style={{ height: "100%", width: "100%" }}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
-        />
-
-        {/* route polyline if available */}
-        {routeCoords && routeCoords.length > 0 && (
-          <Polyline positions={routeCoords} pathOptions={{ color: "#ff6b00", weight: 5, dashArray: "6 6" }} />
-        )}
-
-        {/* origin/destination markers */}
-        {origin && <Marker position={origin} />}
-        {destination && <Marker position={destination} />}
-
-        {/* user current location: pulsing marker + optional accuracy circle */}
-        {userPos && (
-          <>
-            <Marker position={userPos} icon={pulseIcon} />
-            {userAccuracy && typeof userAccuracy === "number" && (
-              <Circle center={userPos} radius={userAccuracy} pathOptions={{ color: "#4da6ff", fillColor: "#4da6ff", opacity: 0.2, fillOpacity: 0.08 }} />
-            )}
-          </>
-        )}
-      </MapContainer>
+    <div className="guardian-mapbox-wrapper">
+      <div ref={mapContainer} className="guardian-mapbox-container" />
+      <div className="guardian-user-info">
+        <h3>User Phone:</h3>
+        <p>{userPhone || "guadian phone number"}</p> // Placeholder if no phone
+      </div>
     </div>
   );
 }
