@@ -560,6 +560,7 @@ function App() {
           value={destination}
           onChange={(e) => { setDestination(e.target.value); setOpenSuggestions(true); }}
           onKeyDown={handleKeyDown}
+          style={ { color: 'black' } }
         />
         {openSuggestions && suggestions.length > 0 && (
           <ul className="suggestions-dropdown">
@@ -589,7 +590,7 @@ function App() {
         value={safeWord}
         onChange={(e) => setSafeWord(e.target.value)}
         placeholder="help"
-        style={ { width: '97%' } }
+        style={ { width: '97%', color: 'black' } }
       />
       <small className="hint">When listening, saying this word triggers the emergency action.</small>
     </div>
