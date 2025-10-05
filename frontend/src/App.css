@@ -446,3 +446,34 @@ Mapbox: Hide Mapbox attribution control (only use for local dev/testing)
 .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
   display: none !important;
 }
+
+
+/* Emergency phone input styling */
+.emergency-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.emergency-input input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #1e293b;
+  font-size: 15px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.emergency-input input:focus {
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.25);
+  outline: none;
+}
+
+.emergency-input .hint {
+  font-size: 13px;
+  color: #64748b;
+}

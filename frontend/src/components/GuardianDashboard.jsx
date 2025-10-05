@@ -138,7 +138,7 @@ export default function GuardianDashboard({ style = "mapbox://styles/mapbox/stre
       <div ref={mapContainer} className="guardian-mapbox-container" />
       <div className="guardian-user-info">
         <h3>User Phone:</h3>
-        <p>{userPhone || "guadian phone number"}</p> // Placeholder if no phone
+        <p>{userPhone || "+15419398606"}</p>
       </div>
     </div>
   );

@@ -50,7 +50,18 @@ function App() {
 
   const emergencyAudioRef = useRef(null);
   const [emergencyOn, setEmergencyOn] = useState(false);
-  const [emergencyPhone, setEmergencyPhone] = useState("6135012873"); // hardcoded for now
+  // Load emergency phone from localStorage if available
+  const [emergencyPhone, setEmergencyPhone] = useState(() => {
+    return localStorage.getItem("emergency_phone") || "6135012873";
+  });
+
+  // Whenever it changes, persist to localStorage
+  useEffect(() => {
+    if (emergencyPhone) {
+      localStorage.setItem("emergency_phone", emergencyPhone);
+    }
+  }, [emergencyPhone]);
+
   // onChange={(e) => setEmergencyPhone(e.target.value)} // FOR LATER OK???
 
 
@@ -637,8 +648,21 @@ function App() {
     <div className="emergency-row">
       <button className="sos" onClick={toggleEmergency}>🆘 Emergency</button>
       <button className="dark" onClick={() => setShowGuardian(true)}>🔈 GuardianDashboard</button>
-
     </div>
+
+    {/* Emergency phone input */}
+    <div className="emergency-input">
+      <label htmlFor="emergencyPhone" className="hint">Emergency contact number</label>
+      <input
+        id="emergencyPhone"
+        type="tel"
+        value={emergencyPhone}
+        onChange={(e) => setEmergencyPhone(e.target.value)}
+        placeholder="Enter phone (e.g. 613-501-2899)"
+      />
+    </div>
+
+
     </section>
 
         {/* Map Section */}
