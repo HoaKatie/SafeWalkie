@@ -11,6 +11,23 @@ function App() {
   const [selectedCoords, setSelectedCoords] = useState(null);
   const [triggerRoute, setTriggerRoute] = useState(false);
   const [mode, setMode] = useState("driving"); // driving | walking
+  const [userLocation, setUserLocation] = useState(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { longitude, latitude } = pos.coords;
+          setUserLocation({ longitude, latitude });
+          console.log('User location set for search proximity:', pos.coords);
+        },
+        (err) => console.warn('Geolocation failed for search proximity:', err),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      console.warn('Geolocation not supported in this browser.');
+    }
+  }, []);
 
   // 🔍 Autocomplete from Mapbox Geocoding API
   useEffect(() => {
@@ -20,11 +37,16 @@ function App() {
         return;
       }
       const token = import.meta.env.VITE_MAPBOX_TOKEN;
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          destination
-        )}.json?access_token=${token}&autocomplete=true&limit=5`
-      );
+      let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        destination
+      )}.json?access_token=${token}&autocomplete=true&limit=5`;
+
+      if (userLocation) {
+        url += `&proximity=${userLocation.longitude},${userLocation.latitude}`;
+        url += `&country=ca`; // restrict to Canada
+      }
+
+      const res = await fetch(url);
       const data = await res.json();
       setSuggestions(data.features || []);
     };
