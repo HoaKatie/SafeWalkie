@@ -1,3 +1,4 @@
+
 /* =========================
    General Styles
    ========================= */
@@ -14,13 +15,14 @@ body, html {
 }
 
 .app {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  width: 100%;
-  max-width: 1200px;
-  padding: 2rem;
+  min-height: 100vh;                  /* min-h-screen */
+  width: 100%;                        /* w-full */
+  background-image: linear-gradient(  /* bg-gradient-to-b from-rose-50 to-pink-50 */
+    to bottom,
+    #fff1f2,  /* rose-50 */
+    #fdf2f8   /* pink-50 */
+  );
+  color: #1e293b;                     
 }
 
 /* =========================
@@ -295,3 +297,145 @@ body, html {
   background: linear-gradient(90deg, #e60073, #ff3399);
   transform: translateY(-2px);
 }
+
+
+/* ---- Header status badges (risk + GPS) ---- */
+.status-badges{display:flex;gap:8px;align-items:center}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;
+  background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;
+}
+.badge .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8}
+
+/* risk bands */
+.badge--low{background:#d1fae5;color:#065f46;border-color:#a7f3d0}
+.badge--low .dot{background:#10b981}
+.badge--med{background:#fde68a;color:#92400e;border-color:#fcd34d}
+.badge--med .dot{background:#f59e0b}
+.badge--high{background:#fecaca;color:#991b1b;border-color:#fca5a5}
+.badge--high .dot{background:#ef4444}
+
+/* gps */
+.badge--gps-good{background:#d1fae5;color:#065f46;border-color:#a7f3d0}
+.badge--gps-ok{background:#fde68a;color:#92400e;border-color:#fcd34d}
+.badge--gps-poor{background:#fecaca;color:#991b1b;border-color:#fca5a5}
+
+/* ===== Header + Badges ===== */
+.topbar{max-width:1100px;margin:0 auto;padding:24px 16px;display:flex;justify-content:space-between;align-items:center}
+.brand{margin:0;font-weight:900;color:#db2777;letter-spacing:-0.02em;font-size:34px}
+.tagline{margin:4px 0 0;color:#475569}
+.status-badges{display:flex;gap:8px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.badge .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8}
+.badge--low{background:#d1fae5;color:#065f46;border-color:#a7f3d0}.badge--low .dot{background:#10b981}
+.badge--med{background:#fde68a;color:#92400e;border-color:#fcd34d}.badge--med .dot{background:#f59e0b}
+.badge--high{background:#fecaca;color:#991b1b;border-color:#fca5a5}.badge--high .dot{background:#ef4444}
+.badge--gps-good{background:#d1fae5;color:#065f46;border-color:#a7f3d0}
+
+/* ===== Controls Card ===== */
+.controls-card{
+  max-width:1100px;margin:10px auto;background:rgba(255,255,255,.72);
+  backdrop-filter:saturate(120%) blur(4px);border:1px solid #fce7f3;border-radius:24px;
+  padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.05)
+}
+.lbl{font-size:14px;color:#334155;margin-bottom:6px;display:block}
+
+/* Destination row */
+.dest-row{display:flex;gap:8px;align-items:center}
+.dest-input-wrap{position:relative;flex:1}
+.dest-input-wrap input{
+  width:100%;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;
+  outline:none;transition:box-shadow .15s ease,border-color .15s ease
+}
+.dest-input-wrap input:focus{box-shadow:0 0 0 4px rgba(236,72,153,.15);border-color:#eaa6c8}
+
+/* Autocomplete list (if you use it) */
+.suggestions-dropdown{position:absolute;z-index:30;left:0;right:0;top:46px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+  box-shadow:0 12px 24px rgba(0,0,0,.08);max-height:260px;overflow:auto;margin:0;padding:0;list-style:none}
+.suggestions-dropdown li{padding:10px 12px;cursor:pointer}
+.suggestions-dropdown li:hover{background:#f8fafc}
+
+/* Start button */
+.primary{background:#ec4899;color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;
+  transition:filter .06s ease,transform .06s ease}
+.primary:hover{filter:brightness(.97);transform:translateY(-1px)}
+
+/* Mode + listening segment */
+.mode-row{margin-top:12px;display:flex;justify-content:space-between;align-items:center}
+.seg{display:flex;gap:6px}
+.seg-on,.seg-off{padding:8px 12px;border-radius:999px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#334155}
+.seg-on{background:#db2777;border-color:#db2777;color:#fff}
+.seg-on.good{background:#059669;border-color:#059669}
+
+/* Safe word input */
+.safeword-row{margin-top:10px}
+.safeword-row input{width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
+.hint{color:#64748b;font-size:12px}
+
+/* Emergency buttons */
+.emergency-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.sos{background:#dc2626;color:#fff;border:0;border-radius:16px;padding:14px;font-weight:700;cursor:pointer}
+.dark{background:#0f172a;color:#fff;border:0;border-radius:16px;padding:14px;font-weight:700;cursor:pointer}
+
+/* Diagnostics */
+.diag-card{margin-top:12px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:10px}
+.diag-row{display:flex;justify-content:space-between;font-size:14px;margin-top:6px}
+.diag-row:first-child{margin-top:0}
+.ok{color:#059669}.warn{color:#d97706}.muted{color:#64748b}
+
+/* Optional: unified focus ring for all controls */
+:root{--focus-ring:rgba(236,72,153,.28);--focus-border:#eaa6c8}
+.primary:focus,.seg-on:focus,.seg-off:focus,.sos:focus,.dark:focus,
+.dest-input-wrap input:focus,.safeword-row input:focus{outline:0;box-shadow:0 0 0 4px var(--focus-ring)}
+
+/* Keep placeholder text inside the input when a button sits to the right */
+.dest-input-wrap input{
+  /* leave space on the right roughly equal to your Start button width */
+  padding-right: 0px;                  /* tweak if your Start width changes */
+  width: 97%;                      /* prevent input from growing too wide */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;               /* show … instead of running under the button */
+}
+
+/* ---- Risk gauge under the map ---- */
+.risk-under{
+  max-width: 1100px;
+  margin: 12px auto 0 auto;
+  padding: 0 16px;
+}
+
+.risk-card{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: saturate(120%) blur(4px);
+  border: 1px solid #fce7f3;
+  border-radius: 24px;
+  padding: 18px 14px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.06);
+}
+
+/* The circular widget */
+.risk-circle{ position: relative; display: grid; place-items: center; }
+.risk-circle-arc{ transform: rotate(-90deg); }
+.risk-circle-center{
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.risk-circle-label{
+  font-size: 12px; color: #64748b; letter-spacing: .08em; text-transform: uppercase;
+}
+.risk-circle-value{
+  font-size: 34px; font-weight: 900; line-height: 1;
+}
+.risk-circle-band{ font-size: 12px; color: #64748b; }
+
+/* Small screens: keep it comfy */
+@media (max-width: 480px){
+  .risk-card{ padding: 14px 10px; }
+}
+
+

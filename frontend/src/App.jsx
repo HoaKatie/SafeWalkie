@@ -4,6 +4,39 @@ import MapView from './components/MapView';
 import WeatherWidget from './components/WeatherWidget';
 import GuardianDashboard from "./components/GuardianDashboard";
 
+function CircularRisk({ value = 0, size = 160, stroke = 14 }) {
+  const v = Math.max(0, Math.min(100, value));
+  const band = v < 30 ? "low" : v < 60 ? "med" : "high";
+  const ringColor = band === "low" ? "#10b981" : band === "med" ? "#f59e0b" : "#ef4444";
+
+  const radius = (size - stroke) / 2;
+  const c = 2 * Math.PI * radius;
+  const dash = (v / 100) * c;
+
+  return (
+    <div className="risk-card">
+      <div className="risk-circle">
+        <svg width={size} height={size} className="risk-circle-arc">
+          <circle cx={size/2} cy={size/2} r={radius} stroke="#e5e7eb" strokeWidth={stroke} fill="none" />
+          <circle
+            cx={size/2} cy={size/2} r={radius}
+            stroke={ringColor} strokeWidth={stroke} fill="none"
+            strokeDasharray={`${dash} ${c}`} strokeLinecap="round"
+          />
+        </svg>
+        <div className="risk-circle-center">
+          <span className="risk-circle-label">RISK</span>
+          <span className="risk-circle-value" style={{ color: ringColor }}>{Math.round(v)}</span>
+          <span className="risk-circle-band">
+            {band === "low" ? "Green" : band === "med" ? "Amber" : "Red"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function App() {
   const [riskLevel, setRiskLevel] = useState(1);
   const [riskPosition, setRiskPosition] = useState(40);
@@ -491,87 +524,81 @@ function App() {
   return (
     <div className="app">
       {/* Header */}
-      <header className="header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <h1>SAFE WALKIE</h1>
-          <p>Your safe navigation assistant</p>
-        </div>
+<header className="topbar">
+  <div>
+    <h1 className="brand">SAFE WALKIE</h1>
+    <p className="tagline">Safety-first walking companion</p>
+  </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {/* quick guardian toggle for testing */}
-          <button onClick={() => setShowGuardian(true)} style={{ padding: "6px 10px", borderRadius: 8, cursor: "pointer" }}>
-            Open Guardian Dashboard
-          </button>
+  {/* Status badges (risk + GPS) */}
+  <div className="status-badges">
+    {(() => {
+      const band = riskScore < 30 ? "low" : riskScore < 60 ? "med" : "high";
+      return (
+        <>
+          <span className={`badge ${band === "low" ? "badge--low" : band === "med" ? "badge--med" : "badge--high"}`}>
+            <span className="dot" />
+            {band === "low" ? "Low Risk" : band === "med" ? "Elevated" : "High Risk"}
+          </span>
+          <span className="badge badge--gps-good">GPS: good</span>
+        </>
+      );
+    })()}
+  </div>
+</header>
 
-          
-        </div>
-      </header>
+<main>
+  {/* Controls card (destination, mode, safe word, buttons, diagnostics) */}
+  <section className="controls-card">
+    <label className="lbl">Enter destination</label>
 
-      <main>
-        {/* Search Bar + Buttons + Safe Word input */}
-        <div className="search-container">
-          {/* Emergency Contact Number setup */}
-          <div className="emergency-contact-setup">
-            <label htmlFor="emergencyPhone">Emergency Phone:</label>
-            <input
-              id="emergencyPhone"
-              type="tel"
-              placeholder="Enter phone number"
-              // we can ignore actual input value for now, use dummy
-              onChange={(e) => console.log("Entered phone number:", e.target.value)}
-            />
-            <button onClick={() => alert("Phone saved (demo only)")}>Save</button>
-          </div>
+    <div className="dest-row">
+      <div className="dest-input-wrap">
+        <input
+          type="text"
+          placeholder="e.g., 1125 Colonel By Dr"
+          value={destination}
+          onChange={(e) => { setDestination(e.target.value); setOpenSuggestions(true); }}
+          onKeyDown={handleKeyDown}
+        />
+        {openSuggestions && suggestions.length > 0 && (
+          <ul className="suggestions-dropdown">
+            {suggestions.map((s) => (
+              <li key={s.id} onClick={() => handleSelect(s)}>{s.place_name}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <button onClick={handleSearch} className="primary">Start</button>
+    </div>
 
-          <div style={{ position: "relative" }}>
-            <input
-              type="text"
-              placeholder="Enter your destination"
-              value={destination}
-              onChange={(e) => {
-                setDestination(e.target.value);
-                setOpenSuggestions(true);
-              }}
-              onKeyDown={handleKeyDown}
-            />
-            {openSuggestions && suggestions.length > 0 && (
-              <ul className="suggestions-dropdown">
-                {suggestions.map((s) => (
-                  <li key={s.id} onClick={() => handleSelect(s)}>
-                    {s.place_name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+    <div className="mode-row">
+      <button
+        className={listening ? "seg-on good" : "seg-off"}
+        onClick={toggleSafeWord}
+      >
+        {listening ? "🎤 Safe word ON" : "🎙️ Safe word OFF"}
+      </button>
+    </div>
 
-          <div className="search-buttons">
-            <button onClick={handleSearch}>Start Route</button>
+    <div className="safeword-row">
+      <label className="hint">Safe word (hands-free trigger)</label>
+      <input
+        id="safeWordInput"
+        type="text"
+        value={safeWord}
+        onChange={(e) => setSafeWord(e.target.value)}
+        placeholder="help"
+        style={ { width: '97%' } }
+      />
+      <small className="hint">When listening, saying this word triggers the emergency action.</small>
+    </div>
 
-            <button className="emergency-btn" onClick={toggleEmergency}>
-              🚨 Emergency
-            </button>
-            {/* Safe Word toggle button */}
-            <button
-              className={`safe-word-btn ${listening ? 'active' : ''}`}
-              onClick={toggleSafeWord}
-            >
-              {listening ? 'Safe Word ON' : 'Safe Word OFF'}
-            </button>
-          </div>
-
-          <div className="safe-word-setup">
-            <label htmlFor="safeWordInput">Safe word:</label>
-            <input
-              id="safeWordInput"
-              type="text"
-              value={safeWord}
-              onChange={(e) => setSafeWord(e.target.value)}
-              placeholder="Type your safe word (e.g. help)"
-            />
-            <small className="hint">When listening, saying this word triggers the emergency.</small>
-          </div>
-        </div>
+    <div className="emergency-row">
+      <button className="sos" onClick={toggleEmergency}>🆘 Emergency</button>
+      <button className="dark">🔈 Test Alert</button>
+    </div>
+    </section>
 
         {/* Map Section */}
         <div className="map-section">
@@ -587,18 +614,11 @@ function App() {
 
         {/* Feature Section */}
         <div className="features">
-          <div className="feature risk-meter">
-            <h3>Risk Meter</h3>
-            <div className="meter-bar">
-              <div className="meter-green"></div>
-              <div className="meter-amber"></div>
-              <div className="meter-red"></div>
-              <div className="meter-point" style={{ left: `${riskPosition}%` }} />
-            </div>
-            <p className="meter-text">
-              {riskLevel === 0 ? 'Low Risk' : riskLevel === 1 ? 'Moderate Risk' : 'High Risk'}
-            </p>
-          </div>
+          {/* Circular Risk below the map */}
+          <section className="risk-under">
+            <CircularRisk value={riskScore} size={160} stroke={14} />
+          </section>
+
 
           <div className={`feature checkin-banner ${riskLevel === 1 ? 'amber' : riskLevel === 2 ? 'red' : ''}`}>
             {riskLevel === 0 ? (
