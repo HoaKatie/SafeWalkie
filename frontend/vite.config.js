@@ -23,5 +23,11 @@ export default defineConfig({
         '/risk_update':  { target: 'http://localhost:5001', changeOrigin: true },
 
     },
+    host: true,
+    allowedHosts: [
+      'hypolimnial-stilted-ashley.ngrok-free.dev',  // add your current Ngrok hostname here
+      // You can add more allowed hosts here if needed
+    ],
+    cors: true,
   },
 })

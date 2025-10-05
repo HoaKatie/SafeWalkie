@@ -24,3 +24,12 @@ Use `npm run dev -- --host`
 And find your local computer ip with: `ipconfig getifaddr en0` (mac), `ipconfig` (win/linux)
 
 Then on phone's browser: `http://<your_ip_add>:5173/`
+
+
+## SET UP WITH NGROK (But dont need this anymore since Hoa already created and local hosting on: https://hypolimnial-stilted-ashley.ngrok-free.dev/)
+
+# Full setup for mac:
+brew install ngrok
+ngrok config add-authtoken <HOA_AUTH_TOKEN>
+npm run dev -- --host
+npx ngrok http 5173 (in a new terminal)
