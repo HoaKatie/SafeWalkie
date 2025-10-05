@@ -99,9 +99,13 @@ function App() {
             console.log('Speech result:', transcript);
             // match safe word (case-insensitive). use includes for phrase match
             if (safeWord && transcript.includes(safeWord.trim().toLowerCase())) {
-              // trigger emergency (silent=false shows alert + plays sound)
-              handleEmergency();
+              // Immediately trigger emergency sound (no popup alert)
+              handleEmergency(true);
             }
+
+            // For debugging: print every recognized word/phrase to console
+            console.log(`[Speech Debug] Heard: "${transcript}"`);
+
           }
         }
       };
