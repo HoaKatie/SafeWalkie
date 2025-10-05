@@ -8,6 +8,7 @@ function App() {
   const [riskPosition, setRiskPosition] = useState(40);
   const [destination, setDestination] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [openSuggestions, setOpenSuggestions] = useState(false);
   const [selectedCoords, setSelectedCoords] = useState(null);
   const [triggerRoute, setTriggerRoute] = useState(false);
   const [mode, setMode] = useState("driving"); // driving | walking
@@ -31,33 +32,40 @@ function App() {
 
   // 🔍 Autocomplete from Mapbox Geocoding API
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (destination.length < 3) {
-        setSuggestions([]);
-        return;
-      }
-      const token = import.meta.env.VITE_MAPBOX_TOKEN;
-      let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-        destination
-      )}.json?access_token=${token}&autocomplete=true&limit=5`;
+  const fetchSuggestions = async () => {
+    if (destination.length < 3) {
+      setSuggestions([]);
+      setOpenSuggestions(false); // 👈 hide when input is short
+      return;
+    }
 
-      if (userLocation) {
-        url += `&proximity=${userLocation.longitude},${userLocation.latitude}`;
-        url += `&country=ca`; // restrict to Canada
-      }
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
+    let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+      destination
+    )}.json?access_token=${token}&autocomplete=true&limit=5`;
 
-      const res = await fetch(url);
-      const data = await res.json();
-      setSuggestions(data.features || []);
-    };
-    fetchSuggestions();
-  }, [destination]);
+    if (userLocation) {
+      url += `&proximity=${userLocation.longitude},${userLocation.latitude}`;
+      url += `&country=ca`; // keep your Canada bias
+    }
+
+    const res = await fetch(url);
+    const data = await res.json();
+    setSuggestions(data.features || []);
+  };
+  fetchSuggestions();
+}, [destination, userLocation]); // 👈 include userLocation so bias applies once it's known
+
 
   const handleSelect = (place) => {
     setDestination(place.place_name);
     setSelectedCoords(place.geometry.coordinates);
-    setSuggestions([]); // close dropdown
+    setOpenSuggestions(false);   // 👈 explicitly close dropdown
+    setSuggestions([]);          // clear items
+    setTriggerRoute(false);      // keep requiring "Start Route"
+    console.log('Selected place:', place);
   };
+
 
   // Safe word states
   const [safeWord, setSafeWord] = useState('help'); // default safe word
@@ -66,19 +74,23 @@ function App() {
 
   const handleSearch = () => {
     if (!selectedCoords) {
-      alert("Please choose a valid destination from the suggestions.");
+      console.warn("No coordinates selected from suggestions.");
+      window.alert("⚠️ Please select an address from the dropdown first.");
       return;
     }
+
     setTriggerRoute((prev) => !prev);
     setSuggestions([]); // close dropdown
   };
 
+  // Disable Enter key triggering any route search
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      setSuggestions([]); // ✅ close dropdown
-      handleSearch();
+      e.preventDefault(); // stop form submission or unwanted route triggering
+      console.log("Enter key pressed — ignored. Use Start Route button instead.");
     }
   };
+
 
   // Emergency action
   const handleEmergency = (silent = false) => {
@@ -187,11 +199,13 @@ function App() {
               type="text"
               placeholder="Enter your destination"
               value={destination}
-              onChange={(e) => setDestination(e.target.value)}
+              onChange={(e) => {
+                setDestination(e.target.value);
+                setOpenSuggestions(true); // 👈 open while typing
+              }}
               onKeyDown={handleKeyDown}
             />
-            {/* Dropdown suggestions */}
-            {suggestions.length > 0 && (
+            {openSuggestions && suggestions.length > 0 && ( // 👈 only show when open
               <ul className="suggestions-dropdown">
                 {suggestions.map((s) => (
                   <li key={s.id} onClick={() => handleSelect(s)}>

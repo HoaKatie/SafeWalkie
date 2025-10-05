@@ -183,10 +183,12 @@ export default function MapView({ destination, mode, setMode, triggerRoute }) {
 
   // Draw route when triggered / mode changes
   useEffect(() => {
-    console.log("Attempting to draw route:", { destination, currentCoords, mode });
+    console.log("Attempting to draw route:", { destination, currentCoords, mode, triggerRoute });
+    if (!triggerRoute) return; // ⛔ do nothing unless Start Route toggled
     if (!destination || !currentCoords || !mapRef.current) return;
     drawRoute(currentCoords, destination, mode);
   }, [triggerRoute, destination, mode]);
+
 
   const drawRoute = async (start, end, profile) => {
     console.log("Fetching directions:", start, "→", end, "profile:", profile);
