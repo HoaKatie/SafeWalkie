@@ -80,23 +80,23 @@ function App() {
   // guardian view full-screen toggle
   const [showGuardian, setShowGuardian] = useState(false);
 
-  function getOrCreateClientId() {
-    let id = localStorage.getItem("client_id");
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("client_id", id);
-    }
-    return id;
-  }
-  const clientId = getOrCreateClientId();
+  // function getOrCreateClientId() {
+  //   let id = localStorage.getItem("client_id");
+  //   if (!id) {
+  //     id = crypto.randomUUID();
+  //     localStorage.setItem("client_id", id);
+  //   }
+  //   return id;
+  // }
+  // const clientId = getOrCreateClientId();
   
-  // translate score → UI level/position
-  function scoreToUi(score) {
-    const level = score <= 24 ? 0 : score <= 59 ? 1 : 2; // 0=green,1=amber,2=red
-    const pos = Math.max(0, Math.min(100, score));       // 0–100%
-    console.log(`Risk score ${score} → level ${level}, pos ${pos}%`);
-    return { level, pos };
-  }
+  // // translate score → UI level/position
+  // function scoreToUi(score) {
+  //   const level = score <= 24 ? 0 : score <= 59 ? 1 : 2; // 0=green,1=amber,2=red
+  //   const pos = Math.max(0, Math.min(100, score));       // 0–100%
+  //   console.log(`Risk score ${score} → level ${level}, pos ${pos}%`);
+  //   return { level, pos };
+  // }
 
   const [riskScore, setRiskScore] = useState(40);
 
@@ -128,32 +128,32 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!sessionId || !userLocation) return; // only start once both exist
+  // useEffect(() => {
+  //   if (!sessionId || !userLocation) return; // only start once both exist
 
-    const interval = setInterval(async () => {
-      try {
-        const payload = {
-          user_id: clientId,
-          current_location: [userLocation.longitude, userLocation.latitude],
-          walking_session_id: sessionId,
-          timestamp: new Date().toISOString(),
-        };
+  //   const interval = setInterval(async () => {
+  //     try {
+  //       const payload = {
+  //         user_id: clientId,
+  //         current_location: [userLocation.longitude, userLocation.latitude],
+  //         walking_session_id: sessionId,
+  //         timestamp: new Date().toISOString(),
+  //       };
 
-        const response = await fetch("/update_location", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        console.log("✅ Published location", payload);
+  //       const response = await fetch("/update_location", {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify(payload),
+  //       });
+  //       console.log("✅ Published location", payload);
 
-      } catch (err) {
-        console.warn("Failed to publish location:", err);
-      }
-    }, 5000); // every 5 seconds
+  //     } catch (err) {
+  //       console.warn("Failed to publish location:", err);
+  //     }
+  //   }, 5000); // every 5 seconds
 
-    return () => clearInterval(interval);
-  }, [sessionId, userLocation, clientId]);
+  //   return () => clearInterval(interval);
+  // }, [sessionId, userLocation, clientId]);
   
   // Autocomplete from Mapbox Geocoding API
   useEffect(() => {
@@ -194,45 +194,45 @@ function App() {
     console.log('Selected place:', place);
   };
 
-  async function startWalkFlow() {
-    if (!userLocation) {
-      alert("Waiting for your current location...");
-      return;
-    }
-    if (!selectedCoords) {
-      alert("Please choose a valid destination from the suggestions.");
-      return;
-    }
+  // async function startWalkFlow() {
+  //   if (!userLocation) {
+  //     alert("Waiting for your current location...");
+  //     return;
+  //   }
+  //   if (!selectedCoords) {
+  //     alert("Please choose a valid destination from the suggestions.");
+  //     return;
+  //   }
 
-    const payload = {
-      user_id: clientId,
-      start_location: [userLocation.longitude, userLocation.latitude],
-      end_location: selectedCoords
-    };
+  //   // const payload = {
+  //   //   user_id: clientId,
+  //   //   start_location: [userLocation.longitude, userLocation.latitude],
+  //   //   end_location: selectedCoords
+  //   // };
 
-    try {
-      const res = await fetch("/start_walk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  //   try {
+  //     const res = await fetch("/start_walk", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(payload),
+  //     });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Backend error ${res.status}`);
-      }
+  //     if (!res.ok) {
+  //       const err = await res.json().catch(() => ({}));
+  //       throw new Error(err.error || `Backend error ${res.status}`);
+  //     }
 
-      const json = await res.json(); // expecting { walking_session_id, route: [[lon,lat], ...] }
-      setSessionId(json.walking_session_id);
-      setRouteCoords(json.route || null);
-    } catch (e) {
-      console.warn("startWalkFlow failed, using simulated route", e);
-      // fallback: generate simulated route (lon,lat pairs)
-      const simRoute = generateStraightRoute([userLocation.longitude, userLocation.latitude], selectedCoords, 20);
-      setSessionId(`sim-${Date.now()}`);
-      setRouteCoords(simRoute);
-    }
-  }
+  //     const json = await res.json(); // expecting { walking_session_id, route: [[lon,lat], ...] }
+  //     setSessionId(json.walking_session_id);
+  //     setRouteCoords(json.route || null);
+  //   } catch (e) {
+  //     console.warn("startWalkFlow failed, using simulated route", e);
+  //     // fallback: generate simulated route (lon,lat pairs)
+  //     const simRoute = generateStraightRoute([userLocation.longitude, userLocation.latitude], selectedCoords, 20);
+  //     setSessionId(`sim-${Date.now()}`);
+  //     setRouteCoords(simRoute);
+  //   }
+  // }
 
   // Safe word and recognition (unchanged)
   const [safeWord, setSafeWord] = useState('help');
@@ -248,7 +248,7 @@ function App() {
 
     setTriggerRoute((prev) => !prev);
     setSuggestions([]);
-    startWalkFlow();
+    // startWalkFlow();
   };
 
   const handleKeyDown = (e) => {

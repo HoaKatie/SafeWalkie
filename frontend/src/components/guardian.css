@@ -101,3 +101,30 @@
 }
 
 /* Note: Map route line styling is handled via Mapbox paint options */
+
+
+/* Guardian's own live location marker (purple pulse) */
+.mb-guardian-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #a855f7; /* violet */
+  border: 2px solid rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 rgba(168,85,247,0.6);
+  transform: translate(-50%, -50%);
+  position: relative;
+}
+
+.mb-guardian-marker::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(168,85,247,0.25);
+  animation: pulse 1.6s infinite;
+  z-index: -1;
+}

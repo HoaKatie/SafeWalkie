@@ -15,6 +15,7 @@ TWILIO_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 # Support both names just in case
 TWILIO_NUMBER = os.getenv("TWILIO_PHONE_NUMBER") or os.getenv("TWILIO_FROM_NUMBER")
+# MY_NUMBER = "+16135012873"     # your phone number (receiver)
 
 # Voice + message config
 # Voices: "alice" (Twilio’s default) or Amazon Polly voices like "Polly.Joanna", "Polly.Matthew"
@@ -31,6 +32,7 @@ def call_emergency():
     try:
         data = request.get_json(force=True)
         phone = data.get("phone")
+        # to_number = MY_NUMBER
 
         if not phone:
             return jsonify({"error": "Missing 'phone' field"}), 400
@@ -49,7 +51,7 @@ def call_emergency():
 """.strip()
 
         call = client.calls.create(
-            to=phone,
+            to=phone, # to_number,
             from_=TWILIO_NUMBER,
             twiml=twiml
         )
