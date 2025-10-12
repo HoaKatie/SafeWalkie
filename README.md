@@ -1,16 +1,156 @@
-# React + Vite
+# Safe Walkie
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<p align="center">
+  <img src="./assets/header-banner.png" alt="Safe Walkie — header banner" width="100%">
+</p>
 
-Currently, two official plugins are available:
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <!-- Replace OWNER/REPO and WORKFLOW if you wire up GitHub Actions -->
+  <a href="https://github.com/OWNER/REPO/actions"><img src="https://img.shields.io/github/actions/workflow/status/OWNER/REPO/ci.yml?label=CI&logo=github" alt="Build Status"></a>
+  <img src="https://img.shields.io/badge/PWA-Ready-success" alt="PWA Ready">
+  <img src="https://img.shields.io/badge/Mobile-iOS%20%7C%20Android-ff69b4" alt="Mobile Platforms">
+  <img src="https://img.shields.io/badge/React-19.1.1-61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/Flask-3.1.2-000000" alt="Flask">
+  <img src="https://img.shields.io/badge/Vite-7.1.7-646CFF" alt="Vite">
+</p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+> Your personal, hands‑free safety companion for solo walking — real‑time tracking, AI‑informed risk, and instant emergency alerts.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Demo
 
-## Expanding the ESLint configuration
+<p align="center">
+  <img src="./assets/demo-walk.gif" alt="Safe Walkie — demo flow" width="75%"><br/>
+  <em>Emergency trigger flow (placeholder). Record your real demo and replace this GIF.</em>
+</p>
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Map & Route | Guardian Dashboard |
+| --- | --- |
+| <img src="./assets/screenshot-map.png" alt="Map view" /> | <img src="./assets/screenshot-guardian.png" alt="Guardian dashboard" /> |
+
+---
+
+## Overview
+
+Safe Walkie combines real‑time mapping, voice recognition, and an event‑driven backend to provide proactive safety monitoring and instant emergency response.
+
+---
+
+## Architecture
+
+### System Overview (Mermaid)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User (App)
+    participant FE as React Frontend
+    participant API as Flask Location API
+    participant MQ as RabbitMQ
+    participant AN as Analytics Service
+    participant TW as Twilio API
+    participant G as Guardian
+
+    U->>FE: Start Walk / Speak Safe Word
+    FE->>API: /start_walk / update_location
+    API->>MQ: publish walk.started / location.update
+    AN-->>MQ: consume location.update
+    AN->>MQ: publish alert.events (risk scores)
+    API-->>MQ: consume alert.events
+    FE->>API: poll /risk/latest
+    API-->>FE: risk score (green/amber/red)
+    FE->>TW: /api/call_emergency (when triggered)
+    TW->>G: Automated call with details
+```
+
+### Event-Driven Design
+
+- **Location API** publishes session + location events
+- **Analytics** computes risk (off‑route, inactivity, anomalies) and publishes alerts
+- **Frontend** polls `/risk/latest` and triggers emergency flow when needed
+- **Twilio** places automated calls to guardians (optional)
+
+---
+
+## Installation
+
+### Frontend
+
+```bash
+git clone <repo-url>
+cd Safe-Walkie/frontend
+npm install
+
+# env
+cat > .env.local << 'EOF'
+VITE_MAPBOX_TOKEN=your_mapbox_access_token_here
+VITE_BACKEND_URL=http://localhost:5001
+EOF
+
+npm run dev   # http://localhost:5173
+```
+
+### Backend
+
+```bash
+cd ../backend
+python -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**Start RabbitMQ (choose one):**
+```bash
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+# or: brew services start rabbitmq
+# or: sudo systemctl start rabbitmq-server
+```
+
+**Backend env:**
+```bash
+cat > .env << 'EOF'
+MAPBOX_TOKEN=your_mapbox_token_here
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+TWILIO_VOICE=alice
+TWILIO_GUARDIAN_ALERT_MESSAGE=HELLO, THIS IS AN IMPORTANT CALL. YOU ARE THE GUARDIAN AND THE PERSON IS IN DANGER.
+EOF
+```
+
+**Run services (3 terminals):**
+```bash
+python location-api.py   # :5001
+python analytics.py      # :5002
+python twilio-api.py     # :3001 (optional)
+```
+
+---
+
+## Usage
+
+- Enter destination → start route
+- Toggle **Safe word ON** (default: `help`) and allow mic
+- Watch risk indicator and use **Emergency** when needed
+- Guardian uses the **Dashboard** to monitor live status
+
+---
+
+## Badges (CI / Shields)
+
+- To enable the **Build Status** badge, create `.github/workflows/ci.yml` and replace `OWNER/REPO` above with your repo.
+- Common options: lint, test, build, deploy. See GitHub Actions starter workflows.
+
+---
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
+
+---
+
+## Credits
+
+Built with ❤️ by the Safe Walkie team at Tech‑Nol‑Hack.
